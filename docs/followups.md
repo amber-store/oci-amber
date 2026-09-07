@@ -279,6 +279,28 @@ Deferred from `docs/superpowers/specs/2026-09-05-browse-command-design.md`:
   is recomposed, so an archive mixing the two gets a rough estimate until
   the slow layers dominate. A per-kind rate (the blob's meta.json says
   which) would tighten it.
+- Parallel rebuild: done (2026-09-07), `--parallelism` (default
+  `NumCPU/2`). `dockerarchive.Write` stages blobs into files under
+  `WriteOptions.WorkDir` (the OS temp directory) on that many workers,
+  fed in write order and bounded to twice the parallelism ahead of the
+  writer, which copies them into the archive in digest order. Measured
+  on `dmilhdef/lhh:82` (55.7 MiB archive, a 28 MiB go-flate and a
+  30 MiB zlib layer, M4 Pro, best of two): 8.7 s before, 7.4 s after,
+  8.9 s with `--parallelism 1`, all three archives byte-identical. The
+  save now takes as long as its slowest layer's recompression (the zlib
+  one) instead of the sum, so images with several large layers gain
+  more. Left open:
+  - The staging order is the write order, so a large blob early in
+    digest order holds the queue while the workers behind it idle once
+    the lookahead is full; feeding largest-first with a byte bound on
+    what is staged (as `import` does with `absentLargestFirst`) would
+    keep the workers busy at the cost of more temp space.
+  - Raw blobs take the same path as prisms, through a staged file, since
+    the `Source` does not say which is which; streaming them straight
+    into the archive would save a disk round trip on `--allow-raw`
+    stores with large raw layers.
+  - The copy into the archive is not shown in the progress; a multi-GiB
+    raw layer sits at 100% for the seconds its copy takes.
 - docker's containerd store also writes a
   `containerd.io/distribution.source.<registry>` annotation on the
   `index.json` entry; `save` does not, and nothing reads it on load.

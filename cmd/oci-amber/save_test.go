@@ -46,11 +46,17 @@ func TestSaveFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("save: %v", err)
 	}
-	if want := (saveConfig{Store: "/srv/amber", Refs: []string{"library/app:v1"}, Progress: "auto"}); !reflect.DeepEqual(cfg, want) {
+	if want := (saveConfig{Store: "/srv/amber", Refs: []string{"library/app:v1"}, Progress: "auto", Parallelism: defaultMaxConcurrentFinalize()}); !reflect.DeepEqual(cfg, want) {
 		t.Errorf("config = %+v, want %+v", cfg, want)
 	}
 	if cfg, err := runSaveApp(t, "--store", "/srv/amber", "--progress", "plain", "app:v1"); err != nil || cfg.Progress != "plain" {
 		t.Errorf("--progress plain: %+v, %v", cfg, err)
+	}
+	if cfg, err := runSaveApp(t, "--store", "/srv/amber", "--parallelism", "3", "app:v1"); err != nil || cfg.Parallelism != 3 {
+		t.Errorf("--parallelism 3: %+v, %v", cfg, err)
+	}
+	if _, err := runSaveApp(t, "--store", "/srv/amber", "--parallelism", "0", "app:v1"); err == nil || !strings.Contains(err.Error(), "--parallelism") {
+		t.Errorf("--parallelism 0 must be rejected: %v", err)
 	}
 	if _, err := runSaveApp(t, "--store", "/srv/amber", "--progress", "fancy", "app:v1"); err == nil || !strings.Contains(err.Error(), "--progress") {
 		t.Errorf("--progress fancy must be rejected: %v", err)
@@ -78,8 +84,9 @@ func TestSaveFlags(t *testing.T) {
 	}
 	t.Setenv("OCI_AMBER_STORE", "/env/store")
 	t.Setenv("OCI_AMBER_PROGRESS", "tui")
-	if cfg, err := runSaveApp(t, "app:v1"); err != nil || cfg.Store != "/env/store" || cfg.Progress != "tui" {
-		t.Errorf("store and progress from the environment: %+v, %v", cfg, err)
+	t.Setenv("OCI_AMBER_PARALLELISM", "7")
+	if cfg, err := runSaveApp(t, "app:v1"); err != nil || cfg.Store != "/env/store" || cfg.Progress != "tui" || cfg.Parallelism != 7 {
+		t.Errorf("store, progress and parallelism from the environment: %+v, %v", cfg, err)
 	}
 }
 

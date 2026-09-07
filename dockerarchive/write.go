@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"os"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/draganm/oci-amber/oci"
 )
@@ -52,26 +54,41 @@ type Source interface {
 // entry either.
 type WriteOptions struct {
 	Platform *oci.Platform
-	// Progress, when set, is called on Write's goroutine: once, with Count
-	// and Total, when every manifest has been resolved and before the
-	// first byte; then before each blobs/sha256 entry, after every write
-	// to it, and once it is complete.
+	// Parallelism is how many blobs are rebuilt at once, ahead of the
+	// archive; less than 1 means 1. Blobs are rebuilt into files under
+	// WorkDir ("" is the OS temp directory) and copied into the archive
+	// in order, so a save needs room there for about twice Parallelism
+	// blobs at a time. The archive's bytes do not depend on either.
+	Parallelism int
+	WorkDir     string
+	// Progress, when set, is called once, with Count and Total, when every
+	// manifest has been resolved and before the first byte; then whenever
+	// a blob starts or finishes being rebuilt, after every write of one,
+	// and after every entry written to the archive. Calls come from
+	// several goroutines but never at once.
 	Progress func(WriteProgress)
 }
 
 // WriteProgress is what WriteOptions.Progress receives: how much of the
-// archive's blobs/sha256 entries has been written, and which entry is
-// being written.
+// archive's blobs/sha256 entries has been produced and written, and which
+// blobs are being rebuilt.
 type WriteProgress struct {
-	Count   int   // blobs/sha256 entries, manifests included
-	Total   int64 // their bytes
-	Done    int   // entries written whole
-	Written int64 // of Total
-	// Blob is the entry being written, "" between entries; Size is its
-	// size and BlobWritten how much of it has been written.
-	Blob        oci.Digest
-	Size        int64
-	BlobWritten int64
+	Count int   // blobs/sha256 entries, manifests included
+	Total int64 // their bytes
+	Done  int   // entries written to the archive whole
+	// Produced is how many of Total's bytes have been rebuilt from the
+	// source, ahead of their entry in the archive; it is the work done.
+	Produced int64
+	// Active is the blobs being rebuilt right now, in write order.
+	Active []BlobProgress
+}
+
+// BlobProgress is one blob being rebuilt: its size and how much of it the
+// source has produced.
+type BlobProgress struct {
+	Digest  oci.Digest
+	Size    int64
+	Written int64
 }
 
 // Write writes a `docker image save` archive of images to w, reading from
@@ -82,6 +99,9 @@ type WriteProgress struct {
 // directories 0755, modification times the epoch, so the archive is a
 // function of its content. Nothing is written until every manifest has
 // been read and parsed, so a missing image fails before the first byte.
+// Config and layer blobs are rebuilt from src into staged files, several
+// at once (WriteOptions.Parallelism), and copied into the archive in
+// order; the staged files are gone when Write returns.
 func Write(ctx context.Context, w io.Writer, src Source, images []Export, opts WriteOptions) error {
 	if len(images) == 0 {
 		return errors.New("dockerarchive: nothing to save")
@@ -92,7 +112,7 @@ func Write(ctx context.Context, w io.Writer, src Source, images []Export, opts W
 			return err
 		}
 	}
-	return p.writeTo(ctx, w)
+	return p.writeTo(ctx, w, max(1, opts.Parallelism), opts.WorkDir)
 }
 
 // saveItem is one blobs/sha256 entry: a manifest read whole and parsed,
@@ -111,14 +131,59 @@ type savePlan struct {
 	legacy      map[oci.Digest]*LegacyEntry
 	legacyOrder []oci.Digest
 	progress    func(WriteProgress) // nil when nobody listens
-	state       WriteProgress
+
+	// mu guards state, which the writer and the stager's workers update.
+	mu    sync.Mutex
+	state WriteProgress
 }
 
-// report sends the state to the progress callback.
+// report sends a copy of the state to the progress callback. The caller
+// holds mu, so reports never overlap.
 func (p *savePlan) report() {
 	if p.progress != nil {
-		p.progress(p.state)
+		s := p.state
+		s.Active = slices.Clone(s.Active)
+		p.progress(s)
 	}
+}
+
+// startBlob adds d to the active blobs, in write (digest) order.
+func (p *savePlan) startBlob(d oci.Digest, size int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	i, _ := slices.BinarySearchFunc(p.state.Active, d, func(b BlobProgress, d oci.Digest) int { return strings.Compare(string(b.Digest), string(d)) })
+	p.state.Active = slices.Insert(p.state.Active, i, BlobProgress{Digest: d, Size: size})
+	p.report()
+}
+
+// advance counts n more bytes of d as produced.
+func (p *savePlan) advance(d oci.Digest, n int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if i := slices.IndexFunc(p.state.Active, func(b BlobProgress) bool { return b.Digest == d }); i >= 0 {
+		p.state.Active[i].Written += n
+	}
+	p.state.Produced += n
+	p.report()
+}
+
+// finishBlob removes d from the active blobs.
+func (p *savePlan) finishBlob(d oci.Digest) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.state.Active = slices.DeleteFunc(p.state.Active, func(b BlobProgress) bool { return b.Digest == d })
+	p.report()
+}
+
+// entryDone counts one more blobs/sha256 entry written to the archive;
+// produced is how many of its bytes were not counted before (a manifest's,
+// written from memory).
+func (p *savePlan) entryDone(produced int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.state.Done++
+	p.state.Produced += produced
+	p.report()
 }
 
 // add resolves one export: the top-level entry, everything under it, and
@@ -217,8 +282,9 @@ func (p *savePlan) resolve(ctx context.Context, repo string, d oci.Digest) (*oci
 	return m, body, nil
 }
 
-// writeTo streams the archive.
-func (p *savePlan) writeTo(ctx context.Context, w io.Writer) error {
+// writeTo streams the archive, rebuilding blobs on workers goroutines into
+// files under workDir ahead of their entries.
+func (p *savePlan) writeTo(ctx context.Context, w io.Writer, workers int, workDir string) error {
 	tw := tar.NewWriter(w)
 	dir := func(name string) error {
 		return tw.WriteHeader(&tar.Header{Name: name, Typeflag: tar.TypeDir, Mode: 0o755})
@@ -237,41 +303,54 @@ func (p *savePlan) writeTo(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("dockerarchive: writing archive: %w", err)
 	}
 	digests := slices.Sorted(maps.Keys(p.items))
+	var blobs []oci.Digest // the entries the stager rebuilds, in order
+	p.mu.Lock()
 	p.state.Count = len(digests)
 	for _, d := range digests {
 		p.state.Total += p.items[d].size
+		if p.items[d].body == nil {
+			blobs = append(blobs, d)
+		}
 	}
 	p.report()
+	p.mu.Unlock()
+
+	outer := ctx
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	st, err := p.stage(ctx, cancel, blobs, workers, workDir)
+	if err != nil {
+		return err
+	}
+	defer st.close()
+	buf := make([]byte, 1<<20)
 	for _, d := range digests {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
 		it := p.items[d]
-		kind := "blob"
 		if it.body != nil {
-			kind = "manifest"
+			if err := file(blobPath(d), 0o444, it.body); err != nil {
+				return fmt.Errorf("dockerarchive: writing manifest %s: %w", d, err)
+			}
+			p.entryDone(it.size)
+			continue
+		}
+		s, err := st.next()
+		if err != nil {
+			return st.failure(outer, err)
+		}
+		if s.err != nil {
+			return st.failure(outer, s.err)
+		}
+		if s.n != it.size {
+			return fmt.Errorf("dockerarchive: blob %s is %d bytes, its descriptor says %d", d, s.n, it.size)
 		}
 		if err := tw.WriteHeader(&tar.Header{Name: blobPath(d), Typeflag: tar.TypeReg, Mode: 0o444, Size: it.size}); err != nil {
-			return fmt.Errorf("dockerarchive: writing %s %s: %w", kind, d, err)
+			return fmt.Errorf("dockerarchive: writing blob %s: %w", d, err)
 		}
-		p.state.Blob, p.state.Size, p.state.BlobWritten = d, it.size, 0
-		p.report()
-		ew := &entryWriter{plan: p, w: tw}
-		var err error
-		if it.body != nil {
-			_, err = ew.Write(it.body)
-		} else {
-			err = p.src.Blob(ctx, d, ew)
+		if err := copyStaged(tw, s.path, buf); err != nil {
+			return fmt.Errorf("dockerarchive: writing blob %s: %w", d, err)
 		}
-		if err != nil {
-			return fmt.Errorf("dockerarchive: writing %s %s: %w", kind, d, err)
-		}
-		if p.state.BlobWritten != it.size {
-			return fmt.Errorf("dockerarchive: blob %s is %d bytes, its descriptor says %d", d, p.state.BlobWritten, it.size)
-		}
-		p.state.Blob, p.state.Size, p.state.BlobWritten = "", 0, 0
-		p.state.Done++
-		p.report()
+		os.Remove(s.path)
+		p.entryDone(0)
 	}
 	index, err := json.Marshal(oci.Manifest{SchemaVersion: 2, MediaType: oci.MediaTypeOCIIndex, Manifests: p.index})
 	if err != nil {
@@ -323,19 +402,13 @@ func dockerReference(n Name) string {
 	}
 }
 
-// entryWriter writes one blobs/sha256 entry, counting the bytes into the
-// plan's progress and reporting after every write.
-type entryWriter struct {
-	plan *savePlan
-	w    io.Writer
-}
-
-func (e *entryWriter) Write(b []byte) (int, error) {
-	n, err := e.w.Write(b)
-	if n > 0 {
-		e.plan.state.BlobWritten += int64(n)
-		e.plan.state.Written += int64(n)
-		e.plan.report()
+// copyStaged copies the staged file at path into w through buf.
+func copyStaged(w io.Writer, path string, buf []byte) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
 	}
-	return n, err
+	defer f.Close()
+	_, err = io.CopyBuffer(w, f, buf)
+	return err
 }

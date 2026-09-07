@@ -242,16 +242,27 @@ bytes. Nothing is written before every reference has been resolved, and
 `-o` removes a partial file after a failure. `save` opens the store
 directly, so it cannot run while `serve` has it open.
 
+Blobs are rebuilt ahead of the archive, several at once: `--parallelism`
+(default `NumCPU/2`, `OCI_AMBER_PARALLELISM`) is how many, each into a
+file under the OS temp directory (`TMPDIR`) that is copied into the
+archive in digest order and removed. A prism layer's recompression runs
+on one core for the go-flate and zlib engines, so an image's large layers
+are what the parallelism buys back; the rebuilding runs up to about twice
+`--parallelism` blobs ahead of the archive, which is how much temp space
+a save needs at a time. The archive's bytes do not depend on any of this.
+
 Progress goes to stderr, so it shows whether the archive is a file or a
-pipe: a screen with the blob being written, an overall bar, the elapsed
+pipe: a screen with the blobs being rebuilt, an overall bar, the elapsed
 time and an ETA when stderr and stdin are terminals (`q` or ctrl-c
 cancels and removes a partial `-o` file), a status line every few
 seconds otherwise; `--progress tui|plain` (or `OCI_AMBER_PROGRESS`)
 overrides the choice. Either way the save ends with one line on stderr,
-`Saved library/app:v1 → app.tar: 1.2 GiB in 1m45s`. The ETA is the bytes
-left over the rate so far, so it settles after a few seconds and is only
-as good as the layers are alike: a prism layer is recomposed and
-recompressed on the way out, a raw one copied.
+`Saved library/app:v1 → app.tar: 1.2 GiB in 1m45s`. The bar and the ETA
+follow the bytes rebuilt, which is where the time goes; the copy into the
+archive trails them. The ETA is the bytes left over the rate so far, so it
+settles after a few seconds and is only as good as the layers are alike:
+a prism layer is recomposed and recompressed on the way out, a raw one
+copied.
 
 ## Configuration
 
