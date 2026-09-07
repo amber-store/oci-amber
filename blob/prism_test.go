@@ -22,8 +22,8 @@ import (
 	"github.com/draganm/zrecipe/engine/pgzip"
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // prismFile is one regular file of a test archive.

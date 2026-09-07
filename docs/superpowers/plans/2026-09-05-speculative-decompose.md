@@ -340,7 +340,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
+	"github.com/amber-store/core/amberpack"
 )
 
 // recordObj is o as a pre-encoded record: what a caller that already holds
@@ -529,7 +529,7 @@ package packstore
 import (
 	"fmt"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
+	"github.com/amber-store/core/amberpack"
 )
 
 // prepare returns the record to append for obj and the payload length the
@@ -694,7 +694,7 @@ Note the PR URL in the task report. Do not merge; merging and the final pin are 
 
 ```bash
 cd /Users/dragan/draganm/oci-amber
-go mod edit -replace github.com/jobs-build/amber-store-core=/Users/dragan/jobs-build/amber-store-core
+go mod edit -replace github.com/amber-store/core=/Users/dragan/jobs-build/amber-store-core
 nix develop --command go mod tidy
 nix develop --command go build ./... && nix develop --command go test ./store ./blob
 ```
@@ -733,9 +733,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 )
 
 // packFixture is the content every pack test stages: one file that spans
@@ -1300,8 +1300,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/packstore"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/packstore"
 )
 
 // Pack is a staged pack file: the objects a pack Writer received, encoded
@@ -1719,7 +1719,7 @@ func TestPutUncompressedNonTarNeverStages(t *testing.T) {
 }
 ```
 
-Add the imports the file needs (`os`, `sync`, `github.com/jobs-build/amber-store-core/fstree`) next to the existing ones.
+Add the imports the file needs (`os`, `sync`, `github.com/amber-store/core/fstree`) next to the existing ones.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -1897,7 +1897,7 @@ func (b *Store) stage(ctx context.Context, p *pipe, w *store.Writer) *staged {
 }
 ```
 
-Delete the old post-Analyze `if params.Format == zrecipe.FormatNone { ... startsWithTarHeader ... }` block (it moved before Analyze). Add the imports `crypto/sha256`, `encoding/hex`, `github.com/jobs-build/amber-store-core/key`, `lukechampine.com/blake3`, `tarprism "github.com/draganm/tar-prism"`, `github.com/draganm/oci-amber/oci`, `github.com/draganm/oci-amber/store`.
+Delete the old post-Analyze `if params.Format == zrecipe.FormatNone { ... startsWithTarHeader ... }` block (it moved before Analyze). Add the imports `crypto/sha256`, `encoding/hex`, `github.com/amber-store/core/key`, `lukechampine.com/blake3`, `tarprism "github.com/draganm/tar-prism"`, `github.com/amber-store/oci-amber/oci`, `github.com/amber-store/oci-amber/store`.
 
 Update the `analyze` doc comment to: "analyze runs zrecipe's first pass under the analyze deadline while the speculative decompose stages the stream (spec "Speculative decompose"), and classifies the result. It returns an error only for failures that must fail the upload: the request context ended, an I/O error, an unexpected zrecipe error, a pack file that could not be created. Every fallback case is a raw decision carrying its reason; a prism decision carries the staged pack, which the caller must drop or commit."
 
@@ -2008,7 +2008,7 @@ func (b *Store) commit(w *store.Writer, s *staged, params *zrecipe.Params, d oci
 }
 ```
 
-Update the `prismResult` comment's first line to "prismResult is what the commit leaves in the store before the blob root is built". Update `decomposeError`'s comment to "decomposeError reports that the decompressed stream could not be taken apart: tar-prism rejected it, or the stream the stager hashed differs from what pass one recorded." Update `amberSink`'s `closeRecipe` comment: replace "ingestPrism can defer this right after newAmberSink" with "stage calls this right after DecomposeTo returns". Remove the imports `prism.go` no longer needs (`encoding/hex`, `lukechampine.com/blake3`, `github.com/draganm/oci-amber/upload`); `crypto/sha256` stays for `roundTripCheck`, `bytes` for `commit`.
+Update the `prismResult` comment's first line to "prismResult is what the commit leaves in the store before the blob root is built". Update `decomposeError`'s comment to "decomposeError reports that the decompressed stream could not be taken apart: tar-prism rejected it, or the stream the stager hashed differs from what pass one recorded." Update `amberSink`'s `closeRecipe` comment: replace "ingestPrism can defer this right after newAmberSink" with "stage calls this right after DecomposeTo returns". Remove the imports `prism.go` no longer needs (`encoding/hex`, `lukechampine.com/blake3`, `github.com/amber-store/oci-amber/upload`); `crypto/sha256` stays for `roundTripCheck`, `bytes` for `commit`.
 
 - [ ] **Step 5: Wire `Put`**
 
@@ -2146,13 +2146,13 @@ Run `grep -n "two passes\|pass one\|pass two\|second pass" README.md`. If nothin
 ```bash
 cd /Users/dragan/jobs-build/amber-store-core && git rev-parse HEAD   # the record-write-path tip, pushed in Task 3
 cd /Users/dragan/draganm/oci-amber
-go mod edit -dropreplace github.com/jobs-build/amber-store-core
-nix develop --command go get github.com/jobs-build/amber-store-core@<that sha>
+go mod edit -dropreplace github.com/amber-store/core
+nix develop --command go get github.com/amber-store/core@<that sha>
 nix develop --command go mod tidy
 git diff go.mod   # expect only the amber-store-core line changed, to a v0.0.3-0.<date>-<sha> pseudo-version, and no replace
 ```
 
-If `go get` cannot see the commit (the module proxy has not indexed the branch yet), run it with `GOPROXY=direct GONOSUMDB=github.com/jobs-build/amber-store-core` or `GOFLAGS=-mod=mod GOPRIVATE=github.com/jobs-build`.
+If `go get` cannot see the commit (the module proxy has not indexed the branch yet), run it with `GOPROXY=direct GONOSUMDB=github.com/amber-store/core` or `GOFLAGS=-mod=mod GOPRIVATE=github.com/jobs-build`.
 
 - [ ] **Step 5: Full verification**
 

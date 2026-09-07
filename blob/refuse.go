@@ -3,7 +3,7 @@ package blob
 import (
 	"fmt"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // RawRefusedError reports that a blob could only be stored raw and the

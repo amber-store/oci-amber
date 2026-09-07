@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/rootfs"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // fsRootFor returns the filesystem view's root for an image: the rootfs

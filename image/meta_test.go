@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestStatsCompressionRatio(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // tagsResponse is the body of GET /v2/<name>/tags/list.

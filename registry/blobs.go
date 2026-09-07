@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // blobLocation is the canonical URL path of a stored blob.

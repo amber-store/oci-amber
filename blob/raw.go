@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // ingestRaw stores the spool's bytes verbatim through w (spec finalization

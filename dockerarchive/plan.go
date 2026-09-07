@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // PlanBlob is one config, layer or other blob to store.

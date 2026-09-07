@@ -16,8 +16,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // logBuffer collects slog output. The handler serializes its own writes; the

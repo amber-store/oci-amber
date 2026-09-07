@@ -10,12 +10,12 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/cborx"
-	"github.com/jobs-build/amber-store-core/chunkers"
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/packstore"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/cborx"
+	"github.com/amber-store/core/chunkers"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/packstore"
 )
 
 // Stats is the accounting result of one Writer, as defined by the design

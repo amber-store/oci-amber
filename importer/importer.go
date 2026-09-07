@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // putHook is a test seam: when non-nil, putBlob calls it right after

@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/urfave/cli/v2"
 
-	"github.com/draganm/oci-amber/browse"
+	"github.com/amber-store/oci-amber/browse"
 )
 
 // browseConfig is everything `browse` needs. browseConfigFromCLI fills it

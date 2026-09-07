@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // memSource is a Source over maps: the manifests and blobs of the images a

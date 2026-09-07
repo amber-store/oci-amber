@@ -99,7 +99,7 @@ func TestSectionSpoolRemoveLeavesSourceAlone(t *testing.T) {
 }
 ```
 
-Add `"bytes"`, `"io"`, `"os"`, `"path/filepath"` and `"github.com/draganm/oci-amber/oci"` to the test file's imports if missing.
+Add `"bytes"`, `"io"`, `"os"`, `"path/filepath"` and `"github.com/amber-store/oci-amber/oci"` to the test file's imports if missing.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -200,7 +200,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // recorder is an Observer that keeps every call in order.
@@ -331,8 +331,8 @@ package blob
 import (
 	"io"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // Stage is one phase of a blob's finalization, in the order Put runs them.
@@ -523,7 +523,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestBuilderWritesDockerSaveShape(t *testing.T) {
@@ -608,7 +608,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Layer is one layer to add to an image.
@@ -820,8 +820,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func openBuilder(t *testing.T, b *archivetest.Builder) *Archive {
@@ -1015,7 +1015,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Names inside the archive.
@@ -1335,7 +1335,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Name is a repository and tag to publish an image under.
@@ -1427,8 +1427,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 const gzipLayer = "application/vnd.oci.image.layer.v1.tar+gzip"
@@ -1667,7 +1667,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // attestationAnnotation marks a BuildKit attestation manifest in an index.
@@ -2028,9 +2028,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 type clock struct{ t time.Time }
@@ -2220,7 +2220,7 @@ func rowFor(t *testing.T, s Snapshot, name string) BlobRow {
 }
 ```
 
-Add `"github.com/draganm/oci-amber/image"` to the imports.
+Add `"github.com/amber-store/oci-amber/image"` to the imports.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -2238,10 +2238,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Phase is where an import is.
@@ -2643,12 +2643,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 const gzipLayer = "application/vnd.oci.image.layer.v1.tar+gzip"
@@ -2901,10 +2901,10 @@ package importer
 import (
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // EntryReport describes one published image.
@@ -2987,11 +2987,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // Options configure an Importer. Workers is how many blobs are finalized
@@ -3299,7 +3299,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestFormatBytes(t *testing.T) {
@@ -3368,11 +3368,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func sampleReport() *importer.Report {
@@ -3467,7 +3467,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // FormatBytes renders n in binary units with one decimal, bytes exact.
@@ -3564,9 +3564,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // RenderReport renders the end-of-run report as plain text.
@@ -3731,11 +3731,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func plainBar(f float64) string { return "[" + strings.Repeat("#", int(f*10)) + strings.Repeat(".", 10-int(f*10)) + "]" }
@@ -3836,7 +3836,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 func TestRunPlainPrintsStatusAndReturnsResult(t *testing.T) {
@@ -3868,7 +3868,7 @@ Add at the top of `tui/plain_test.go` a one-blob plan value:
 var dockerarchivePlan = dockerarchive.Plan{Blobs: []dockerarchive.PlanBlob{{Digest: oci.DigestOfBytes([]byte("x")), Size: 10}}}
 ```
 
-with imports `"github.com/draganm/oci-amber/dockerarchive"` and `"github.com/draganm/oci-amber/oci"`.
+with imports `"github.com/amber-store/oci-amber/dockerarchive"` and `"github.com/amber-store/oci-amber/oci"`.
 
 - [ ] **Step 3: Implement `tui/view.go`**
 
@@ -3881,9 +3881,9 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 var (
@@ -4032,7 +4032,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // tickInterval is how often the view is refreshed from the tracker.
@@ -4135,7 +4135,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // RunPlain drives run without a screen: a status line is written to w every
@@ -4220,9 +4220,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // runImportApp runs the import command with args and returns the config
@@ -4437,12 +4437,12 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // importRecentTTL keeps every blob's accounting in the recent-uploads table

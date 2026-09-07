@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 const repo = "library/nested/app"

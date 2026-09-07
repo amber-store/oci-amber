@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // tickInterval is how often the view is refreshed from the tracker.

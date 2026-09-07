@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // Kind says how a blob's bytes are kept in the store.

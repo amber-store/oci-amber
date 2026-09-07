@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // listEnv is an image store over a temporary amber store with one config

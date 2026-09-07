@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestFormatBytes(t *testing.T) {

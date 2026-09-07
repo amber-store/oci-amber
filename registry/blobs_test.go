@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // putBlob stores data directly through the blob store, bypassing HTTP.

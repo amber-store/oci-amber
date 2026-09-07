@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/importer"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/importer"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 var dockerarchivePlan = dockerarchive.Plan{Blobs: []dockerarchive.PlanBlob{{Digest: oci.DigestOfBytes([]byte("x")), Size: 10}}}

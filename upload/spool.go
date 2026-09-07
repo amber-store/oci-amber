@@ -12,7 +12,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // ReaderAtSeeker is the view of an upload that blob finalization consumes: a

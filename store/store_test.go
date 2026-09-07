@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/packstore"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/packstore"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // wantConfigJSON is the exact parameter record the spec pins.

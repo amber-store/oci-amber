@@ -3,8 +3,8 @@ package blob
 import (
 	"io"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // Stage is one phase of a blob's finalization, in the order Put runs them.

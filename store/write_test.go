@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/cborx"
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/packstore"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/cborx"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/packstore"
 )
 
 // openWriterStore opens a fresh store in a temp dir and closes it at cleanup.

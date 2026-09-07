@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/draganm/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/rootfs"
 )
 
 func TestParseFSPath(t *testing.T) {

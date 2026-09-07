@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // fsFixture builds one tree and returns an FS over it and the big file's

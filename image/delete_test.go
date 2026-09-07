@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestDeleteByTag(t *testing.T) {

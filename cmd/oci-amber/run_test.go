@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // syncBuffer collects log output written from several goroutines.

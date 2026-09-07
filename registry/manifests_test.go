@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // descriptor is a JSON descriptor object for the manifests built in tests.

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Annotations on index.json entries that name the saved image, as

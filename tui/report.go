@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // RenderReport renders the end-of-run report as plain text.

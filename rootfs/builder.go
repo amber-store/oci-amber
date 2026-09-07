@@ -7,11 +7,11 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // MaxSkipped is how many skipped entries a Result lists; SkippedCount keeps

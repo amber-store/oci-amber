@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // FormatBytes renders n in binary units with one decimal, bytes exact.

@@ -7,7 +7,7 @@ import (
 
 	tarprism "github.com/draganm/tar-prism"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func TestBlobRootListsPrismParts(t *testing.T) {

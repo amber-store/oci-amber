@@ -5,9 +5,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // pushChild pushes a one-layer image manifest by digest and returns its body,

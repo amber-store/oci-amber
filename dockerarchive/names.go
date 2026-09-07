@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Name is a repository and tag to publish an image under.

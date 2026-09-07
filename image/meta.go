@@ -7,8 +7,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/rootfs"
 )
 
 // Kind says whether an image root holds an image manifest or an index.

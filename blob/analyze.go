@@ -13,15 +13,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/amber-store/core/key"
 	tarprism "github.com/draganm/tar-prism"
 	zrecipe "github.com/draganm/zrecipe"
 	cpformat "github.com/draganm/zrecipe/format"
-	"github.com/jobs-build/amber-store-core/key"
 	"lukechampine.com/blake3"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // decision is the outcome of pass one: how the blob will be stored.

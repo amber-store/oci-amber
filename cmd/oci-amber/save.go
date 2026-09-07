@@ -15,10 +15,10 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/urfave/cli/v2"
 
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // saveConfig is everything `save` needs. saveConfigFromCLI fills it from

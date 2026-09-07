@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/tarexport"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/tarexport"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // exported is one entry of a tree exported back to a tar.

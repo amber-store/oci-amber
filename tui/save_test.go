@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestSaveTrackerSnapshot(t *testing.T) {
