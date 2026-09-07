@@ -273,8 +273,12 @@ Deferred from `docs/superpowers/specs/2026-09-05-browse-command-design.md`:
   `docker save --platform` does; today the whole index is saved and the
   platform only picks the `manifest.json` entry (the host's, with no flag
   to override it).
-- A progress line on stderr while a large prism is recomposed; `save` is
-  silent until it is done, like docker.
+- Progress on stderr: done (2026-09-07), `--progress auto|tui|plain`
+  like `import`, with a summary line at the end. The ETA is a single
+  byte rate over every blob; a raw layer streams far faster than a prism
+  is recomposed, so an archive mixing the two gets a rough estimate until
+  the slow layers dominate. A per-kind rate (the blob's meta.json says
+  which) would tighten it.
 - docker's containerd store also writes a
   `containerd.io/distribution.source.<registry>` annotation on the
   `index.json` entry; `save` does not, and nothing reads it on load.

@@ -17,6 +17,7 @@ import (
 	"github.com/draganm/oci-amber/image"
 	"github.com/draganm/oci-amber/oci"
 	"github.com/draganm/oci-amber/store"
+	"github.com/draganm/oci-amber/tui"
 )
 
 // runSaveApp runs the save command with args and returns the config the
@@ -45,8 +46,14 @@ func TestSaveFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("save: %v", err)
 	}
-	if want := (saveConfig{Store: "/srv/amber", Refs: []string{"library/app:v1"}}); !reflect.DeepEqual(cfg, want) {
+	if want := (saveConfig{Store: "/srv/amber", Refs: []string{"library/app:v1"}, Progress: "auto"}); !reflect.DeepEqual(cfg, want) {
 		t.Errorf("config = %+v, want %+v", cfg, want)
+	}
+	if cfg, err := runSaveApp(t, "--store", "/srv/amber", "--progress", "plain", "app:v1"); err != nil || cfg.Progress != "plain" {
+		t.Errorf("--progress plain: %+v, %v", cfg, err)
+	}
+	if _, err := runSaveApp(t, "--store", "/srv/amber", "--progress", "fancy", "app:v1"); err == nil || !strings.Contains(err.Error(), "--progress") {
+		t.Errorf("--progress fancy must be rejected: %v", err)
 	}
 	cfg, err = runSaveApp(t, "--store", "/srv/amber", "-o", "out.tar", "app", "app@sha256:0000000000000000000000000000000000000000000000000000000000000000", "b/c:d")
 	if err != nil {
@@ -70,8 +77,9 @@ func TestSaveFlags(t *testing.T) {
 		t.Error("--store is required")
 	}
 	t.Setenv("OCI_AMBER_STORE", "/env/store")
-	if cfg, err := runSaveApp(t, "app:v1"); err != nil || cfg.Store != "/env/store" {
-		t.Errorf("store from the environment: %+v, %v", cfg, err)
+	t.Setenv("OCI_AMBER_PROGRESS", "tui")
+	if cfg, err := runSaveApp(t, "app:v1"); err != nil || cfg.Store != "/env/store" || cfg.Progress != "tui" {
+		t.Errorf("store and progress from the environment: %+v, %v", cfg, err)
 	}
 }
 
@@ -84,8 +92,10 @@ func save(t *testing.T, cfg saveConfig) ([]byte, *dockerarchive.Archive) {
 	if err := runSave(context.Background(), cfg); err != nil {
 		t.Fatalf("runSave(%v): %v\n%s", cfg.Refs, err, stderr.String())
 	}
-	if stderr.Len() > 0 {
-		t.Errorf("save wrote to stderr:\n%s", stderr.String())
+	// Progress goes to stderr; a buffer is not a terminal, so plain mode,
+	// whose status lines are seconds apart, leaves only the summary.
+	if lines := strings.Split(strings.TrimSuffix(stderr.String(), "\n"), "\n"); len(lines) != 1 || !strings.HasPrefix(lines[0], "Saved ") {
+		t.Errorf("stderr must hold the summary line alone:\n%s", stderr.String())
 	}
 	path := filepath.Join(t.TempDir(), "saved.tar")
 	if err := os.WriteFile(path, stdout.Bytes(), 0o644); err != nil {
@@ -258,12 +268,15 @@ func TestRunSaveRoundTrip(t *testing.T) {
 func TestRunSaveToFile(t *testing.T) {
 	f := newFixture(t)
 	out := filepath.Join(t.TempDir(), "app.tar")
-	var stdout bytes.Buffer
-	if err := runSave(context.Background(), saveConfig{Store: f.store, Refs: []string{"demo/app:v1"}, Output: out, Stdout: &stdout, Stderr: io.Discard}); err != nil {
+	var stdout, stderr bytes.Buffer
+	if err := runSave(context.Background(), saveConfig{Store: f.store, Refs: []string{"demo/app:v1"}, Output: out, Stdout: &stdout, Stderr: &stderr}); err != nil {
 		t.Fatalf("runSave -o: %v", err)
 	}
 	if stdout.Len() != 0 {
 		t.Error("with -o nothing goes to stdout")
+	}
+	if !strings.Contains(stderr.String(), "Saved demo/app:v1 → "+out+": ") {
+		t.Errorf("summary must name the output file:\n%s", stderr.String())
 	}
 	inMemory, _ := save(t, saveConfig{Store: f.store, Refs: []string{"demo/app:v1"}})
 	if onDisk, err := os.ReadFile(out); err != nil || !bytes.Equal(onDisk, inMemory) {
@@ -342,5 +355,20 @@ func TestHostPlatform(t *testing.T) {
 	}
 	if p.OS != wantOS || p.Architecture != runtime.GOARCH || p.Variant != "" {
 		t.Errorf("hostPlatform() = %+v", p)
+	}
+}
+
+// TestRunSaveSummaryLine: the archive's blob bytes and the time it took,
+// on stderr, in every progress mode.
+func TestRunSaveSummaryLine(t *testing.T) {
+	f := newFixture(t)
+	var stdout, stderr bytes.Buffer
+	if err := runSave(context.Background(), saveConfig{Store: f.store, Refs: []string{"demo/app:v1"}, Progress: "plain", Stdout: &stdout, Stderr: &stderr}); err != nil {
+		t.Fatalf("runSave: %v", err)
+	}
+	total := f.app.Size + int64(len(f.appConfig)) + int64(len(f.appLayer))
+	want := "Saved demo/app:v1 → stdout: " + tui.FormatBytes(total) + " in "
+	if got := stderr.String(); !strings.HasPrefix(got, want) || !strings.HasSuffix(got, "s\n") {
+		t.Errorf("stderr = %q, want %q…", got, want)
 	}
 }

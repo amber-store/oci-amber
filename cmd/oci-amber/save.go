@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/charmbracelet/x/term"
 	"github.com/urfave/cli/v2"
@@ -17,6 +18,7 @@ import (
 	"github.com/draganm/oci-amber/dockerarchive"
 	"github.com/draganm/oci-amber/image"
 	"github.com/draganm/oci-amber/oci"
+	"github.com/draganm/oci-amber/tui"
 )
 
 // saveConfig is everything `save` needs. saveConfigFromCLI fills it from
@@ -28,14 +30,17 @@ type saveConfig struct {
 	// Platform is the platform whose child an index's manifest.json entry
 	// describes; nil means hostPlatform().
 	Platform *oci.Platform
+	Progress string    // "auto" | "tui" | "plain"; "" means auto
+	Stdin    io.Reader // nil means os.Stdin; the TUI reads its keys here
 	Stdout   io.Writer // nil means os.Stdout
-	Stderr   io.Writer // nil means os.Stderr
+	Stderr   io.Writer // nil means os.Stderr; progress goes here
 }
 
 func saveFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{Name: "store", Usage: "store `directory` (required)", EnvVars: envVar("store"), Required: true},
 		&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Usage: "write the archive to `path` instead of stdout"},
+		&cli.StringFlag{Name: "progress", Value: "auto", Usage: "progress display on stderr: auto, tui or plain", EnvVars: envVar("progress")},
 	}
 }
 
@@ -43,9 +48,14 @@ func saveConfigFromCLI(c *cli.Context) (saveConfig, error) {
 	if c.NArg() < 1 {
 		return saveConfig{}, errors.New("save takes at least one reference (repo, repo:tag or repo@digest)")
 	}
-	cfg := saveConfig{Store: c.String("store"), Output: c.String("output"), Refs: c.Args().Slice()}
+	cfg := saveConfig{Store: c.String("store"), Output: c.String("output"), Refs: c.Args().Slice(), Progress: c.String("progress")}
 	if cfg.Store == "" {
 		return saveConfig{}, errors.New("--store must not be empty")
+	}
+	switch cfg.Progress {
+	case "auto", "tui", "plain":
+	default:
+		return saveConfig{}, fmt.Errorf("--progress must be auto, tui or plain, got %q", cfg.Progress)
 	}
 	for _, r := range cfg.Refs {
 		if _, err := parseSaveRef(r); err != nil {
@@ -112,11 +122,15 @@ func hostPlatform() *oci.Platform {
 }
 
 // runSave opens the store read-only, resolves every reference, then writes
-// one `docker image save` archive of them to the output. References are
-// resolved before the output is created, so an unknown one leaves nothing
-// behind; a failure while writing removes the output file.
+// one `docker image save` archive of them to the output, showing progress
+// on stderr and ending with a summary line there. References are resolved
+// before the output is created, so an unknown one leaves nothing behind; a
+// failure while writing removes the output file.
 func runSave(ctx context.Context, cfg saveConfig) error {
-	stdout, stderr := cfg.Stdout, cfg.Stderr
+	stdin, stdout, stderr := cfg.Stdin, cfg.Stdout, cfg.Stderr
+	if stdin == nil {
+		stdin = os.Stdin
+	}
 	if stdout == nil {
 		stdout = os.Stdout
 	}
@@ -124,26 +138,66 @@ func runSave(ctx context.Context, cfg saveConfig) error {
 		stderr = os.Stderr
 	}
 	toFile := cfg.Output != "" && cfg.Output != "-"
-	if !toFile {
-		if f, ok := stdout.(*os.File); ok && term.IsTerminal(f.Fd()) {
-			return errors.New("cowardly refusing to save to a terminal. Use the -o flag or redirect.")
+	if !toFile && isTerminal(stdout) {
+		return errors.New("cowardly refusing to save to a terminal. Use the -o flag or redirect.")
+	}
+	// The archive may be on stdout, so the display lives on stderr and
+	// the TUI needs both it and the keyboard to be terminals.
+	mode := cfg.Progress
+	if mode == "" || mode == "auto" {
+		mode = "plain"
+		if isTerminal(stdin) && isTerminal(stderr) {
+			mode = "tui"
 		}
 	}
-	log := slog.New(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	// The TUI keeps warnings for after the screen is gone.
+	var deferred bytes.Buffer
+	var logOut io.Writer = stderr
+	if mode == "tui" {
+		logOut = &deferred
+	}
+	log := slog.New(slog.NewTextHandler(logOut, &slog.HandlerOptions{Level: slog.LevelWarn}))
 	ro, err := openReadOnly(cfg.Store, log)
 	if err != nil {
 		return err
 	}
-	err = writeArchive(ctx, ro, cfg, stdout, toFile)
-	if errors.Is(err, context.Canceled) {
+	output := "stdout"
+	if toFile {
+		output = cfg.Output
+	}
+	what := strings.Join(cfg.Refs, ", ") + " → " + output
+	tr := tui.NewSaveTracker(nil)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	run := func() error { return writeArchive(ctx, ro, cfg, stdout, toFile, tr.Progress) }
+	if mode == "tui" {
+		err = tui.RunSave(tr, "Saving "+what, cancel, stdin, stderr, run)
+	} else {
+		err = tui.RunSavePlain(stderr, tr, plainStatusInterval, run)
+	}
+	if deferred.Len() > 0 {
+		io.Copy(stderr, &deferred)
+	}
+	var terr *tui.TerminalError
+	if errors.Is(err, context.Canceled) && !errors.As(err, &terr) {
 		err = errors.New("save cancelled")
+	}
+	if err == nil {
+		s := tr.Snapshot()
+		fmt.Fprintf(stderr, "Saved %s: %s in %s\n", what, tui.FormatBytes(s.Total), tui.FormatShort(s.Elapsed))
 	}
 	return errors.Join(err, ro.Close())
 }
 
+// isTerminal reports whether v is an *os.File on a terminal.
+func isTerminal(v any) bool {
+	f, ok := v.(*os.File)
+	return ok && term.IsTerminal(f.Fd())
+}
+
 // writeArchive resolves the references and writes the archive to the
-// output file, or to stdout when toFile is false.
-func writeArchive(ctx context.Context, ro *readOnlyStore, cfg saveConfig, stdout io.Writer, toFile bool) error {
+// output file, or to stdout when toFile is false, reporting progress.
+func writeArchive(ctx context.Context, ro *readOnlyStore, cfg saveConfig, stdout io.Writer, toFile bool, progress func(dockerarchive.WriteProgress)) error {
 	exports, err := resolveExports(ro.images, cfg.Refs)
 	if err != nil {
 		return err
@@ -162,7 +216,7 @@ func writeArchive(ctx context.Context, ro *readOnlyStore, cfg saveConfig, stdout
 		out = f
 	}
 	bw := bufio.NewWriterSize(out, 1<<20)
-	err = dockerarchive.Write(ctx, bw, storeSource{ro}, exports, dockerarchive.WriteOptions{Platform: platform})
+	err = dockerarchive.Write(ctx, bw, storeSource{ro}, exports, dockerarchive.WriteOptions{Platform: platform, Progress: progress})
 	if err == nil {
 		err = bw.Flush()
 	}

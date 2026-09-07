@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -411,5 +413,36 @@ func TestWriteBlobSizeMismatch(t *testing.T) {
 	err = Write(context.Background(), io.Discard, sizedSource{src, 1}, export, WriteOptions{})
 	if err == nil || !errors.Is(err, tar.ErrWriteTooLong) {
 		t.Errorf("long blob: %v", err)
+	}
+}
+
+func TestWriteReportsProgress(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{"os":"linux"}`, []string{"layer-one", "layer-two-is-longer"}, nil, nil)
+	var got []WriteProgress
+	write(t, src, WriteOptions{Progress: func(p WriteProgress) { got = append(got, p) }}, Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"})
+
+	// Every blobs/sha256 entry, manifest included, in the order they are
+	// written: each is announced before its first byte, reported after
+	// every write, and counted done afterwards.
+	sizes := map[oci.Digest]int64{img.Digest: img.Size}
+	for d, b := range src.blobs {
+		sizes[d] = int64(len(b))
+	}
+	digests := slices.Sorted(maps.Keys(sizes))
+	var total int64
+	for _, s := range sizes {
+		total += s
+	}
+	want := []WriteProgress{{Count: len(digests), Total: total}}
+	var written int64
+	for i, d := range digests {
+		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i, Blob: d, Size: sizes[d]})
+		written += sizes[d]
+		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i, Blob: d, Size: sizes[d], BlobWritten: sizes[d]})
+		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i + 1})
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("progress calls:\n got %+v\nwant %+v", got, want)
 	}
 }

@@ -52,6 +52,26 @@ type Source interface {
 // entry either.
 type WriteOptions struct {
 	Platform *oci.Platform
+	// Progress, when set, is called on Write's goroutine: once, with Count
+	// and Total, when every manifest has been resolved and before the
+	// first byte; then before each blobs/sha256 entry, after every write
+	// to it, and once it is complete.
+	Progress func(WriteProgress)
+}
+
+// WriteProgress is what WriteOptions.Progress receives: how much of the
+// archive's blobs/sha256 entries has been written, and which entry is
+// being written.
+type WriteProgress struct {
+	Count   int   // blobs/sha256 entries, manifests included
+	Total   int64 // their bytes
+	Done    int   // entries written whole
+	Written int64 // of Total
+	// Blob is the entry being written, "" between entries; Size is its
+	// size and BlobWritten how much of it has been written.
+	Blob        oci.Digest
+	Size        int64
+	BlobWritten int64
 }
 
 // Write writes a `docker image save` archive of images to w, reading from
@@ -66,7 +86,7 @@ func Write(ctx context.Context, w io.Writer, src Source, images []Export, opts W
 	if len(images) == 0 {
 		return errors.New("dockerarchive: nothing to save")
 	}
-	p := &savePlan{src: src, items: map[oci.Digest]*saveItem{}, legacy: map[oci.Digest]*LegacyEntry{}}
+	p := &savePlan{src: src, items: map[oci.Digest]*saveItem{}, legacy: map[oci.Digest]*LegacyEntry{}, progress: opts.Progress}
 	for _, img := range images {
 		if err := p.add(ctx, img, opts.Platform); err != nil {
 			return err
@@ -90,6 +110,15 @@ type savePlan struct {
 	index       []oci.Descriptor // index.json entries, one per Export
 	legacy      map[oci.Digest]*LegacyEntry
 	legacyOrder []oci.Digest
+	progress    func(WriteProgress) // nil when nobody listens
+	state       WriteProgress
+}
+
+// report sends the state to the progress callback.
+func (p *savePlan) report() {
+	if p.progress != nil {
+		p.progress(p.state)
+	}
 }
 
 // add resolves one export: the top-level entry, everything under it, and
@@ -208,27 +237,41 @@ func (p *savePlan) writeTo(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("dockerarchive: writing archive: %w", err)
 	}
 	digests := slices.Sorted(maps.Keys(p.items))
+	p.state.Count = len(digests)
+	for _, d := range digests {
+		p.state.Total += p.items[d].size
+	}
+	p.report()
 	for _, d := range digests {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 		it := p.items[d]
+		kind := "blob"
 		if it.body != nil {
-			if err := file(blobPath(d), 0o444, it.body); err != nil {
-				return fmt.Errorf("dockerarchive: writing manifest %s: %w", d, err)
-			}
-			continue
+			kind = "manifest"
 		}
 		if err := tw.WriteHeader(&tar.Header{Name: blobPath(d), Typeflag: tar.TypeReg, Mode: 0o444, Size: it.size}); err != nil {
-			return fmt.Errorf("dockerarchive: writing blob %s: %w", d, err)
+			return fmt.Errorf("dockerarchive: writing %s %s: %w", kind, d, err)
 		}
-		cw := &countingWriter{w: tw}
-		if err := p.src.Blob(ctx, d, cw); err != nil {
-			return fmt.Errorf("dockerarchive: writing blob %s: %w", d, err)
+		p.state.Blob, p.state.Size, p.state.BlobWritten = d, it.size, 0
+		p.report()
+		ew := &entryWriter{plan: p, w: tw}
+		var err error
+		if it.body != nil {
+			_, err = ew.Write(it.body)
+		} else {
+			err = p.src.Blob(ctx, d, ew)
 		}
-		if cw.n != it.size {
-			return fmt.Errorf("dockerarchive: blob %s is %d bytes, its descriptor says %d", d, cw.n, it.size)
+		if err != nil {
+			return fmt.Errorf("dockerarchive: writing %s %s: %w", kind, d, err)
 		}
+		if p.state.BlobWritten != it.size {
+			return fmt.Errorf("dockerarchive: blob %s is %d bytes, its descriptor says %d", d, p.state.BlobWritten, it.size)
+		}
+		p.state.Blob, p.state.Size, p.state.BlobWritten = "", 0, 0
+		p.state.Done++
+		p.report()
 	}
 	index, err := json.Marshal(oci.Manifest{SchemaVersion: 2, MediaType: oci.MediaTypeOCIIndex, Manifests: p.index})
 	if err != nil {
@@ -280,14 +323,19 @@ func dockerReference(n Name) string {
 	}
 }
 
-// countingWriter counts what a Blob call writes.
-type countingWriter struct {
-	w io.Writer
-	n int64
+// entryWriter writes one blobs/sha256 entry, counting the bytes into the
+// plan's progress and reporting after every write.
+type entryWriter struct {
+	plan *savePlan
+	w    io.Writer
 }
 
-func (c *countingWriter) Write(p []byte) (int, error) {
-	n, err := c.w.Write(p)
-	c.n += int64(n)
+func (e *entryWriter) Write(b []byte) (int, error) {
+	n, err := e.w.Write(b)
+	if n > 0 {
+		e.plan.state.BlobWritten += int64(n)
+		e.plan.state.Written += int64(n)
+		e.plan.report()
+	}
 	return n, err
 }

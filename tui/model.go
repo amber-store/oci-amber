@@ -2,6 +2,7 @@ package tui
 
 import (
 	"errors"
+	"io"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -16,7 +17,7 @@ const tickInterval = 250 * time.Millisecond
 
 type tickMsg time.Time
 
-// doneMsg says the import returned; the program quits with an empty view.
+// doneMsg says the run returned; the program quits with an empty view.
 type doneMsg struct{}
 
 // TerminalError wraps the error tea.Program.Run returned: the terminal could
@@ -26,11 +27,14 @@ type TerminalError struct{ Err error }
 func (e *TerminalError) Error() string { return "terminal: " + e.Err.Error() }
 func (e *TerminalError) Unwrap() error { return e.Err }
 
-// model is the Bubble Tea model: it owns no import state, it renders the
-// tracker's snapshots.
+// viewFunc renders one frame for width columns; bar draws a progress bar
+// for a fraction and spinner is the current spinner frame.
+type viewFunc func(width int, bar func(float64) string, spinner string) string
+
+// model is the Bubble Tea model: it owns no progress state, it renders
+// whatever view reads from its tracker.
 type model struct {
-	tr     *importer.Tracker
-	title  string
+	view   viewFunc
 	cancel func()
 	width  int
 	bar    progress.Model
@@ -38,11 +42,11 @@ type model struct {
 	done   bool
 }
 
-func newModel(tr *importer.Tracker, title string, cancel func()) model {
+func newModel(view viewFunc, cancel func()) model {
 	bar := progress.New(progress.WithDefaultGradient(), progress.WithoutPercentage())
 	bar.Width = 30
 	sp := spinner.New(spinner.WithSpinner(spinner.Dot))
-	return model{tr: tr, title: title, cancel: cancel, width: 80, bar: bar, spin: sp}
+	return model{view: view, cancel: cancel, width: 80, bar: bar, spin: sp}
 }
 
 func tick() tea.Cmd {
@@ -78,36 +82,62 @@ func (m model) View() string {
 	if m.done {
 		return ""
 	}
-	return RenderView(m.tr.Snapshot(), m.title, m.width, m.bar.ViewAs, m.spin.View())
+	return m.view(m.width, m.bar.ViewAs, m.spin.View())
 }
 
-// Run drives run under the TUI: run starts on a goroutine, the program
-// renders the tracker until run returns, and run's result is returned. cancel
-// is called on q or ctrl-c; it should cancel run's context. Signals are left
-// to the caller (the program does not install a handler), so a SIGINT from
-// outside cancels through the caller's context the same way.
-func Run(tr *importer.Tracker, title string, cancel func(), run func() (*importer.Report, error)) (*importer.Report, error) {
-	p := tea.NewProgram(newModel(tr, title, cancel), tea.WithoutSignalHandler())
-	type result struct {
-		rep *importer.Report
-		err error
+// runProgram drives run under a Bubble Tea program: run starts on a
+// goroutine, the program renders view until run returns, and run's error
+// is returned. Keys are read from in and frames written to out; nil means
+// the process's stdin and stdout. cancel is called on q or ctrl-c; it
+// should cancel run's context. Signals are left to the caller (the program
+// does not install a handler), so a SIGINT from outside cancels through the
+// caller's context the same way.
+func runProgram(view viewFunc, cancel func(), in io.Reader, out io.Writer, run func() error) error {
+	opts := []tea.ProgramOption{tea.WithoutSignalHandler()}
+	if in != nil {
+		opts = append(opts, tea.WithInput(in))
 	}
-	results := make(chan result, 1)
+	if out != nil {
+		opts = append(opts, tea.WithOutput(out))
+	}
+	p := tea.NewProgram(newModel(view, cancel), opts...)
+	errs := make(chan error, 1)
 	go func() {
-		rep, err := run()
-		results <- result{rep, err}
+		errs <- run()
 		p.Send(doneMsg{})
 	}()
 	_, teaErr := p.Run()
 	if teaErr != nil {
-		// The terminal failed under us: cancel the import rather than leave
-		// it running unattended with no way to report its progress or be
+		// The terminal failed under us: cancel the run rather than leave
+		// it going unattended with no way to report its progress or be
 		// told to stop.
 		cancel()
 	}
-	r := <-results
+	err := <-errs
 	if teaErr != nil {
-		return r.rep, errors.Join(&TerminalError{teaErr}, r.err)
+		return errors.Join(&TerminalError{teaErr}, err)
 	}
-	return r.rep, r.err
+	return err
+}
+
+// Run drives an import under the TUI on the process's terminal and returns
+// run's result; see runProgram for cancellation.
+func Run(tr *importer.Tracker, title string, cancel func(), run func() (*importer.Report, error)) (*importer.Report, error) {
+	var rep *importer.Report
+	err := runProgram(func(width int, bar func(float64) string, spinner string) string {
+		return RenderView(tr.Snapshot(), title, width, bar, spinner)
+	}, cancel, nil, nil, func() error {
+		var err error
+		rep, err = run()
+		return err
+	})
+	return rep, err
+}
+
+// RunSave drives a save under the TUI, rendering on out with keys from in,
+// and returns run's error; see runProgram for cancellation.
+func RunSave(tr *SaveTracker, title string, cancel func(), in io.Reader, out io.Writer, run func() error) error {
+	return runProgram(func(width int, bar func(float64) string, _ string) string {
+		return RenderSaveView(tr.Snapshot(), title, width, bar)
+	}, cancel, in, out, run)
 }

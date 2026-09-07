@@ -242,6 +242,17 @@ bytes. Nothing is written before every reference has been resolved, and
 `-o` removes a partial file after a failure. `save` opens the store
 directly, so it cannot run while `serve` has it open.
 
+Progress goes to stderr, so it shows whether the archive is a file or a
+pipe: a screen with the blob being written, an overall bar, the elapsed
+time and an ETA when stderr and stdin are terminals (`q` or ctrl-c
+cancels and removes a partial `-o` file), a status line every few
+seconds otherwise; `--progress tui|plain` (or `OCI_AMBER_PROGRESS`)
+overrides the choice. Either way the save ends with one line on stderr,
+`Saved library/app:v1 → app.tar: 1.2 GiB in 1m45s`. The ETA is the bytes
+left over the rate so far, so it settles after a few seconds and is only
+as good as the layers are alike: a prism layer is recomposed and
+recompressed on the way out, a raw one copied.
+
 ## Configuration
 
 `oci-amber serve` flags. Every flag can also be set through the environment

@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 
@@ -26,12 +27,7 @@ func RenderView(s importer.Snapshot, title string, width int, bar func(float64) 
 		width = 80
 	}
 	var b strings.Builder
-	elapsed := "elapsed " + FormatClock(s.Elapsed)
-	gap := width - lipgloss.Width(title) - lipgloss.Width(elapsed)
-	if gap < 2 {
-		gap = 2
-	}
-	b.WriteString(styleTitle.Render(title) + strings.Repeat(" ", gap) + styleDim.Render(elapsed) + "\n\n")
+	b.WriteString(header(title, s.Elapsed, width))
 	switch s.Phase {
 	case importer.PhaseChecking, importer.PhaseIdle:
 		fmt.Fprintf(&b, "  checking archive  %s  %3.0f%%\n", bar(s.Checked), s.Checked*100)
@@ -61,6 +57,28 @@ func RenderView(s importer.Snapshot, title string, width int, bar func(float64) 
 	}
 	b.WriteString("\n  " + styleDim.Render("q or ctrl-c to cancel") + "\n")
 	return clampWidth(b.String(), width)
+}
+
+// header is the first line of a view: the title on the left, the elapsed
+// time on the right, and the title shortened with … when both do not fit
+// in width, so the clock is never pushed off the screen.
+func header(title string, elapsed time.Duration, width int) string {
+	clock := "elapsed " + FormatClock(elapsed)
+	title = truncate(title, width-lipgloss.Width(clock)-2)
+	gap := max(2, width-lipgloss.Width(title)-lipgloss.Width(clock))
+	return styleTitle.Render(title) + strings.Repeat(" ", gap) + styleDim.Render(clock) + "\n\n"
+}
+
+// truncate shortens s to width cells, ending it with … when it had to.
+func truncate(s string, width int) string {
+	if lipgloss.Width(s) <= width {
+		return s
+	}
+	r := []rune(s)
+	for len(r) > 0 && lipgloss.Width(string(r))+1 > width {
+		r = r[:len(r)-1]
+	}
+	return string(r) + "…"
 }
 
 func blobLine(r importer.BlobRow, bar func(float64) string) string {
