@@ -7,7 +7,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // maxSymlinkHops bounds one path resolution, like the kernel's 40.

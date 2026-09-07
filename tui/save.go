@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/draganm/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/dockerarchive"
 )
 
 // etaWarmup is how long a save must have been writing before an ETA is

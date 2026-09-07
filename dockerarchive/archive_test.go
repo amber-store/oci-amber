@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func openBuilder(t *testing.T, b *archivetest.Builder) *Archive {

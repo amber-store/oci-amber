@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/rootfs"
 )
 
 const (

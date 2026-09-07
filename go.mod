@@ -1,4 +1,4 @@
-module github.com/draganm/oci-amber
+module github.com/amber-store/oci-amber
 
 go 1.26.6
 

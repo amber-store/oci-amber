@@ -15,12 +15,12 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/urfave/cli/v2"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/dockerarchive"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/importer"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/dockerarchive"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/importer"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // importRecentTTL keeps every blob's accounting in the recent-uploads table

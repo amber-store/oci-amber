@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // runBrowseApp runs the browse command with args and returns the config

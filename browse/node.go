@@ -10,7 +10,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // Node is one place the browser can be. Every Node is also a Lister, an

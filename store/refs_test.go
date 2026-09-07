@@ -14,7 +14,7 @@ import (
 	"github.com/jobs-build/amber-store-core/packstore"
 	"github.com/jobs-build/amber-store-core/reference"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 const (

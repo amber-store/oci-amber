@@ -6,8 +6,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Tags returns the tags of repo in bytewise order, which is the

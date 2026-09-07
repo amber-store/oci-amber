@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/keyedmutex"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/keyedmutex"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 const (

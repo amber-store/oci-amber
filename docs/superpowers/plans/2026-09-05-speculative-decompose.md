@@ -1897,7 +1897,7 @@ func (b *Store) stage(ctx context.Context, p *pipe, w *store.Writer) *staged {
 }
 ```
 
-Delete the old post-Analyze `if params.Format == zrecipe.FormatNone { ... startsWithTarHeader ... }` block (it moved before Analyze). Add the imports `crypto/sha256`, `encoding/hex`, `github.com/jobs-build/amber-store-core/key`, `lukechampine.com/blake3`, `tarprism "github.com/draganm/tar-prism"`, `github.com/draganm/oci-amber/oci`, `github.com/draganm/oci-amber/store`.
+Delete the old post-Analyze `if params.Format == zrecipe.FormatNone { ... startsWithTarHeader ... }` block (it moved before Analyze). Add the imports `crypto/sha256`, `encoding/hex`, `github.com/jobs-build/amber-store-core/key`, `lukechampine.com/blake3`, `tarprism "github.com/draganm/tar-prism"`, `github.com/amber-store/oci-amber/oci`, `github.com/amber-store/oci-amber/store`.
 
 Update the `analyze` doc comment to: "analyze runs zrecipe's first pass under the analyze deadline while the speculative decompose stages the stream (spec "Speculative decompose"), and classifies the result. It returns an error only for failures that must fail the upload: the request context ended, an I/O error, an unexpected zrecipe error, a pack file that could not be created. Every fallback case is a raw decision carrying its reason; a prism decision carries the staged pack, which the caller must drop or commit."
 
@@ -2008,7 +2008,7 @@ func (b *Store) commit(w *store.Writer, s *staged, params *zrecipe.Params, d oci
 }
 ```
 
-Update the `prismResult` comment's first line to "prismResult is what the commit leaves in the store before the blob root is built". Update `decomposeError`'s comment to "decomposeError reports that the decompressed stream could not be taken apart: tar-prism rejected it, or the stream the stager hashed differs from what pass one recorded." Update `amberSink`'s `closeRecipe` comment: replace "ingestPrism can defer this right after newAmberSink" with "stage calls this right after DecomposeTo returns". Remove the imports `prism.go` no longer needs (`encoding/hex`, `lukechampine.com/blake3`, `github.com/draganm/oci-amber/upload`); `crypto/sha256` stays for `roundTripCheck`, `bytes` for `commit`.
+Update the `prismResult` comment's first line to "prismResult is what the commit leaves in the store before the blob root is built". Update `decomposeError`'s comment to "decomposeError reports that the decompressed stream could not be taken apart: tar-prism rejected it, or the stream the stager hashed differs from what pass one recorded." Update `amberSink`'s `closeRecipe` comment: replace "ingestPrism can defer this right after newAmberSink" with "stage calls this right after DecomposeTo returns". Remove the imports `prism.go` no longer needs (`encoding/hex`, `lukechampine.com/blake3`, `github.com/amber-store/oci-amber/upload`); `crypto/sha256` stays for `roundTripCheck`, `bytes` for `commit`.
 
 - [ ] **Step 5: Wire `Put`**
 

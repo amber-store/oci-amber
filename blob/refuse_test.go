@@ -13,7 +13,7 @@ import (
 	zrecipe "github.com/draganm/zrecipe"
 	"github.com/jobs-build/amber-store-core/fstree"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestRawRefusedErrorMessage(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/draganm/oci-amber/importer"
+	"github.com/amber-store/oci-amber/importer"
 )
 
 // runPlain drives run without a screen: status is written to w as a line

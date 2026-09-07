@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func newTestManager(t *testing.T, maxInMemory int64, timeout time.Duration) (*Manager, string) {

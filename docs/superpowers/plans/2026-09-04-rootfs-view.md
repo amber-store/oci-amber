@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Module `github.com/draganm/oci-amber`; run every go command as `nix develop --command go ...` from the repository root.
+- Module `github.com/amber-store/oci-amber`; run every go command as `nix develop --command go ...` from the repository root.
 - Top-level packages only, no `internal/`. New package: `rootfs`. Import direction: `image -> rootfs -> store -> oci`, `image -> blob -> store`; `rootfs` must not import `blob`.
 - Existing directory entries keep Mode `0o100644` / `0o040755` and zero uid, gid, mtime. Only entries under `rootfs/` carry real metadata.
 - Whiteout semantics per the OCI image spec: `.wh.<name>` removes `<name>` from lower layers, `.wh..wh..opq` removes all lower children, whiteouts never apply to their own layer and never appear in the tree.
@@ -348,7 +348,7 @@ func (w *Writer) PutXattrs(m map[string][]byte) (inline []byte, spilled key.Key,
 - [ ] **Step 4: Run the tests**
 
 Run: `nix develop --command go test ./store/ 2>&1 | tail -5`
-Expected: `ok  	github.com/draganm/oci-amber/store`
+Expected: `ok  	github.com/amber-store/oci-amber/store`
 
 - [ ] **Step 5: Commit**
 
@@ -691,7 +691,7 @@ import (
 	tarprism "github.com/draganm/tar-prism"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // openStore opens a temporary store.
@@ -1135,7 +1135,7 @@ import (
 	tarprism "github.com/draganm/tar-prism"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Layer is what the builder needs from a stored prism: tar-prism's index and
@@ -1604,7 +1604,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func fakeKey(t *testing.T, s string) key.Key {
@@ -1817,7 +1817,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // maxSymlinkHops bounds one path resolution, like the kernel's 40.
@@ -2093,8 +2093,8 @@ import (
 	"github.com/jobs-build/amber-store-core/key"
 	"github.com/jobs-build/amber-store-core/tarexport"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // exported is one entry of a tree exported back to a tar.
@@ -2471,8 +2471,8 @@ import (
 	"github.com/jobs-build/amber-store-core/fstree"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // MaxSkipped is how many skipped entries a Result lists; SkippedCount keeps
@@ -2658,8 +2658,8 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 type fsEntry struct {
@@ -3012,7 +3012,7 @@ Expected: `undefined: RootfsOK`, `m.Rootfs undefined`.
 	MediaTypeDockerConfig       = "application/vnd.docker.container.image.v1+json"
 ```
 
-`image/meta.go`: add `"github.com/draganm/oci-amber/rootfs"` to the imports, `RootfsDir = "rootfs" // the merged root filesystem, manifests with status ok or partial` to the entry-name const block, and:
+`image/meta.go`: add `"github.com/amber-store/oci-amber/rootfs"` to the imports, `RootfsDir = "rootfs" // the merged root filesystem, manifests with status ok or partial` to the entry-name const block, and:
 
 ```go
 // RootfsStatus says whether an image root holds a rootfs/ and why not.
@@ -3051,10 +3051,10 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/rootfs"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // rootfsApplies reports whether m describes a container image whose layers

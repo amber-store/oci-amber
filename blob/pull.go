@@ -9,7 +9,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Blob is an opened blob: its meta.json and the key of its root directory.

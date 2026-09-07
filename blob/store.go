@@ -15,10 +15,10 @@ import (
 	tarprism "github.com/draganm/tar-prism"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/keyedmutex"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/keyedmutex"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 var (

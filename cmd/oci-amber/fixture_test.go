@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/dockerarchive/archivetest"
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/dockerarchive/archivetest"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // fixture is a store holding two images imported from one archive:

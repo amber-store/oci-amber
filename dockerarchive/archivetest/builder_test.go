@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestBuilderWritesDockerSaveShape(t *testing.T) {

@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 // writeJSON writes v as the JSON body of a response with the given status.

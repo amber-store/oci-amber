@@ -18,7 +18,7 @@ import (
 	tarprism "github.com/draganm/tar-prism"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Layer is what the builder needs from a stored prism: tar-prism's index and

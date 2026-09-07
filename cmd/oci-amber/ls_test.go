@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // runLsApp runs the ls command with args and returns the config the action

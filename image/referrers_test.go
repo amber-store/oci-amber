@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 const (

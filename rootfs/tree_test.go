@@ -8,7 +8,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func fakeKey(t *testing.T, s string) key.Key {

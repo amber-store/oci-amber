@@ -7,8 +7,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // computeStats produces the per-image accounting for a manifest or index

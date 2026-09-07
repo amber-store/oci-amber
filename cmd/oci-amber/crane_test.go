@@ -20,9 +20,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
 )
 
 const (

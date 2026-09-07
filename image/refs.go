@@ -3,7 +3,7 @@ package image
 import (
 	"strings"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 // Reference name prefixes. Amber's reference.ValidateName allows '/' and

@@ -341,11 +341,11 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/upload"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/upload"
 )
 
 const (
@@ -678,7 +678,7 @@ import (
 
 	tarprism "github.com/draganm/tar-prism"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func TestBlobRootListsPrismParts(t *testing.T) {
@@ -834,7 +834,7 @@ import (
 
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // Node is one place the browser can be. Every Node is also a Lister, an
@@ -905,11 +905,11 @@ package browse
 import (
 	"fmt"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // Browser builds nodes over an open store. It only reads.
@@ -950,10 +950,10 @@ import (
 	tarprism "github.com/draganm/tar-prism"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/rootfs"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // fileNode is a regular file of the storage tree.
@@ -1218,7 +1218,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/oci"
+	"github.com/amber-store/oci-amber/oci"
 )
 
 func TestReposListsEveryRepository(t *testing.T) {
@@ -1370,7 +1370,7 @@ Expected: compile errors (`f.b.rootNode undefined`, ...).
 
 - [ ] **Step 3: Add the image-level nodes to `browse/storage.go`**
 
-Add `"bytes"`, `"context"`, `"sort"` and `"github.com/draganm/oci-amber/image"`, `"github.com/draganm/oci-amber/oci"` to the imports, then append:
+Add `"bytes"`, `"context"`, `"sort"` and `"github.com/amber-store/oci-amber/image"`, `"github.com/amber-store/oci-amber/oci"` to the imports, then append:
 
 ```go
 // imageRootNode is an image root: the manifest, its meta.json, the blobs
@@ -1653,9 +1653,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // reposNode is the entry screen: every repository with a tag or a manifest.
@@ -1804,7 +1804,7 @@ func imageRow(b *Browser, repo, reference string, im *image.Image) Row {
 
 - [ ] **Step 5: Add the entry points to `browse/browser.go`**
 
-Add `"errors"` and `"github.com/draganm/oci-amber/image"` (already imported) as needed, then append:
+Add `"errors"` and `"github.com/amber-store/oci-amber/image"` (already imported) as needed, then append:
 
 ```go
 // rootNode is the repository listing.
@@ -1985,9 +1985,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/rootfs"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/rootfs"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // fsRootFor returns the filesystem view's root for an image: the rootfs
@@ -2734,7 +2734,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func TestModeString(t *testing.T) {
@@ -2919,8 +2919,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 var (
@@ -3636,7 +3636,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // stackKind names the two stacks an image has.
@@ -4684,10 +4684,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/store"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/store"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // Options configure Run.
@@ -4762,7 +4762,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // runBrowseApp runs the browse command with args and returns the config
@@ -4867,10 +4867,10 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/urfave/cli/v2"
 
-	"github.com/draganm/oci-amber/blob"
-	"github.com/draganm/oci-amber/browse"
-	"github.com/draganm/oci-amber/image"
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/blob"
+	"github.com/amber-store/oci-amber/browse"
+	"github.com/amber-store/oci-amber/image"
+	"github.com/amber-store/oci-amber/store"
 )
 
 // browseConfig is everything `browse` needs. browseConfigFromCLI fills it

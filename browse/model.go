@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/jobs-build/amber-store-core/key"
 
-	"github.com/draganm/oci-amber/oci"
-	"github.com/draganm/oci-amber/tui"
+	"github.com/amber-store/oci-amber/oci"
+	"github.com/amber-store/oci-amber/tui"
 )
 
 // stackKind names the two stacks an image has.

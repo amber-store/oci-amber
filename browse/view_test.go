@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/draganm/oci-amber/store"
+	"github.com/amber-store/oci-amber/store"
 )
 
 func TestModeString(t *testing.T) {
