@@ -1,7 +1,7 @@
 # oci-amber
 
 oci-amber is an OCI distribution registry whose storage is an embedded
-[amber-store-core](https://github.com/jobs-build/amber-store-core) store. It
+[amber-store-core](https://github.com/amber-store/core) store. It
 speaks the standard `/v2/` API, so docker, containerd/nerdctl, podman/skopeo,
 crane, oras and buildkit push and pull against it without any client-side
 configuration beyond the registry URL, imports and writes `docker image

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/oci"

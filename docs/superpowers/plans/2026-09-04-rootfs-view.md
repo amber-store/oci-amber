@@ -167,7 +167,7 @@ func TestDirAddEntryRejects(t *testing.T) {
 }
 ```
 
-Add `"bytes"`, `"slices"` and `"github.com/jobs-build/amber-store-core/cborx"` to the imports of `store/dir_test.go`.
+Add `"bytes"`, `"slices"` and `"github.com/amber-store/core/cborx"` to the imports of `store/dir_test.go`.
 
 Append to `store/write_test.go`:
 
@@ -210,7 +210,7 @@ func TestPutXattrsInlineAndSpilled(t *testing.T) {
 }
 ```
 
-Add `"bytes"` and `"github.com/jobs-build/amber-store-core/cborx"` to the imports of `store/write_test.go` if absent.
+Add `"bytes"` and `"github.com/amber-store/core/cborx"` to the imports of `store/write_test.go` if absent.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -314,7 +314,7 @@ func validatePayload(e fstree.Entry) error {
 
 `AddFile` and `AddDir` keep their own type checks and messages and still call `add`.
 
-In `store/write.go`, add the import `"github.com/jobs-build/amber-store-core/cborx"` and, after `PutBytes`:
+In `store/write.go`, add the import `"github.com/amber-store/core/cborx"` and, after `PutBytes`:
 
 ```go
 // XattrInlineMax is the largest canonical encoding of an extended-attribute
@@ -689,7 +689,7 @@ import (
 	"time"
 
 	tarprism "github.com/draganm/tar-prism"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/store"
 )
@@ -1133,7 +1133,7 @@ import (
 	"time"
 
 	tarprism "github.com/draganm/tar-prism"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 )
@@ -1602,7 +1602,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/store"
 )
@@ -1815,7 +1815,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/store"
 )
@@ -2090,8 +2090,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/tarexport"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/tarexport"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"
@@ -2468,8 +2468,8 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"
@@ -2656,7 +2656,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"
@@ -3049,7 +3049,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/oci"
@@ -3352,7 +3352,7 @@ func (e *e2eEnv) checkRootfs() {
 }
 ```
 
-  Add `"sort"`, `"slices"`, `"github.com/jobs-build/amber-store-core/fstree"` to the imports if absent (`key`, `store`, `image` are already imported).
+  Add `"sort"`, `"slices"`, `"github.com/amber-store/core/fstree"` to the imports if absent (`key`, `store`, `image` are already imported).
 
 - [ ] **Step 2: Run the end-to-end and crane tests**
 

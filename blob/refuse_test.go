@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/amber-store/core/fstree"
 	zrecipe "github.com/draganm/zrecipe"
-	"github.com/jobs-build/amber-store-core/fstree"
 
 	"github.com/amber-store/oci-amber/oci"
 )

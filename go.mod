@@ -3,13 +3,13 @@ module github.com/amber-store/oci-amber
 go 1.26.6
 
 require (
+	github.com/amber-store/core v0.0.4
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/draganm/tar-prism v0.1.2-0.20260903193749-d658ce95e35f
 	github.com/draganm/zrecipe v0.7.0
-	github.com/jobs-build/amber-store-core v0.0.3
 	github.com/klauspost/compress v1.20.0
 	github.com/urfave/cli/v2 v2.27.7
 	lukechampine.com/blake3 v1.4.1

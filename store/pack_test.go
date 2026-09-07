@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 )
 
 // packFixture is the content every pack test stages: one file that spans

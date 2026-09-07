@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 )
 
 var errDirFinished = errors.New("store: dir already finished")

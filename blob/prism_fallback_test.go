@@ -17,9 +17,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/amber-store/core/fstree"
 	tarprism "github.com/draganm/tar-prism"
 	zrecipe "github.com/draganm/zrecipe"
-	"github.com/jobs-build/amber-store-core/fstree"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jobs-build/amber-store-core/cborx"
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/cborx"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 )
 
 // lookupEntry finds name in the directory object dir through the fstree reader

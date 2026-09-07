@@ -339,7 +339,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/image"
@@ -832,7 +832,7 @@ package browse
 import (
 	"time"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/store"
 )
@@ -948,7 +948,7 @@ import (
 	"time"
 
 	tarprism "github.com/draganm/tar-prism"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/rootfs"
@@ -3634,7 +3634,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/tui"
 )

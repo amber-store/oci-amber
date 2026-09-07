@@ -7,8 +7,8 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/jobs-build/amber-store-core/fstree"
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/fstree"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"

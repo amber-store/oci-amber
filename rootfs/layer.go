@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amber-store/core/key"
 	tarprism "github.com/draganm/tar-prism"
-	"github.com/jobs-build/amber-store-core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 )

@@ -17,11 +17,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jobs-build/amber-store-core/chunkers"
-	"github.com/jobs-build/amber-store-core/gc"
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/packstore"
-	"github.com/jobs-build/amber-store-core/refstore"
+	"github.com/amber-store/core/chunkers"
+	"github.com/amber-store/core/gc"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/packstore"
+	"github.com/amber-store/core/refstore"
 )
 
 // ConfigFile is the name of the parameter record inside the store directory.

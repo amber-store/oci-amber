@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/amber-store/core/key"
 	tarprism "github.com/draganm/tar-prism"
 	zrecipe "github.com/draganm/zrecipe"
 	cpformat "github.com/draganm/zrecipe/format"
-	"github.com/jobs-build/amber-store-core/key"
 	"lukechampine.com/blake3"
 
 	"github.com/amber-store/oci-amber/oci"

@@ -14,11 +14,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/amber-store/core/key"
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/store"
 	"github.com/amber-store/oci-amber/upload"
-	"github.com/jobs-build/amber-store-core/key"
 )
 
 const layerMediaType = "application/vnd.oci.image.layer.v1.tar+gzip"

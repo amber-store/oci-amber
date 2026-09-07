@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/jobs-build/amber-store-core/key"
+	"github.com/amber-store/core/key"
 
 	"github.com/amber-store/oci-amber/store"
 )

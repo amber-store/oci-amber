@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/amber-store/core/key"
 	tarprism "github.com/draganm/tar-prism"
 	zrecipe "github.com/draganm/zrecipe"
-	"github.com/jobs-build/amber-store-core/key"
 	kpgzip "github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 

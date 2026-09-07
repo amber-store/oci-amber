@@ -8,9 +8,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/jobs-build/amber-store-core/amberpack"
-	"github.com/jobs-build/amber-store-core/key"
-	"github.com/jobs-build/amber-store-core/packstore"
+	"github.com/amber-store/core/amberpack"
+	"github.com/amber-store/core/key"
+	"github.com/amber-store/core/packstore"
 )
 
 // Pack is a staged pack file: the objects a pack Writer received and the

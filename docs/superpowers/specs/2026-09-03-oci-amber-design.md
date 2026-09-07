@@ -1,7 +1,7 @@
 # oci-amber design
 
 oci-amber is an OCI distribution registry whose storage is an embedded
-[amber-store-core](https://github.com/jobs-build/amber-store-core) store. It
+[amber-store-core](https://github.com/amber-store/core) store. It
 accepts image pushes over HTTP like any registry, but instead of keeping each
 layer as an opaque compressed blob it takes the layer apart with
 [zrecipe](https://github.com/draganm/zrecipe) (compressed stream ->
@@ -44,7 +44,7 @@ served blob is byte-identical to what was pushed.
 
 | Module | Used for |
 |---|---|
-| `github.com/jobs-build/amber-store-core` | packstore, refstore, fstree builders/readers, chunkers, gc |
+| `github.com/amber-store/core` | packstore, refstore, fstree builders/readers, chunkers, gc |
 | `github.com/draganm/zrecipe` | `Analyze`, `Recompress`, `Params` |
 | `github.com/draganm/tar-prism` | `DecomposeTo`, `ComposeFrom`, `Index`, `Entry` (new sink/source API, see below) |
 | `github.com/klauspost/compress` | the bounded compressed tar-header probe |

@@ -12,12 +12,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/amber-store/core/key"
 	"github.com/amber-store/oci-amber/blob"
 	"github.com/amber-store/oci-amber/keyedmutex"
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/rootfs"
 	"github.com/amber-store/oci-amber/store"
-	"github.com/jobs-build/amber-store-core/key"
 )
 
 // Store keeps manifests and indexes as image roots in an amber store and

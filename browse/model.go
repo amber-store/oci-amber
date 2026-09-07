@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/amber-store/core/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jobs-build/amber-store-core/key"
 
 	"github.com/amber-store/oci-amber/oci"
 	"github.com/amber-store/oci-amber/tui"
