@@ -30,10 +30,12 @@ type saveConfig struct {
 	// Platform is the platform whose child an index's manifest.json entry
 	// describes; nil means hostPlatform().
 	Platform *oci.Platform
-	Progress string    // "auto" | "tui" | "plain"; "" means auto
-	Stdin    io.Reader // nil means os.Stdin; the TUI reads its keys here
-	Stdout   io.Writer // nil means os.Stdout
-	Stderr   io.Writer // nil means os.Stderr; progress goes here
+	// Parallelism is how many blobs are rebuilt at once; 0 means 1.
+	Parallelism int
+	Progress    string    // "auto" | "tui" | "plain"; "" means auto
+	Stdin       io.Reader // nil means os.Stdin; the TUI reads its keys here
+	Stdout      io.Writer // nil means os.Stdout
+	Stderr      io.Writer // nil means os.Stderr; progress goes here
 }
 
 func saveFlags() []cli.Flag {
@@ -41,6 +43,7 @@ func saveFlags() []cli.Flag {
 		&cli.StringFlag{Name: "store", Usage: "store `directory` (required)", EnvVars: envVar("store"), Required: true},
 		&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Usage: "write the archive to `path` instead of stdout"},
 		&cli.StringFlag{Name: "progress", Value: "auto", Usage: "progress display on stderr: auto, tui or plain", EnvVars: envVar("progress")},
+		&cli.IntFlag{Name: "parallelism", Value: defaultMaxConcurrentFinalize(), Usage: "blobs rebuilt at once, ahead of the archive (`count`, default NumCPU/2, minimum 1)", EnvVars: envVar("parallelism")},
 	}
 }
 
@@ -48,9 +51,12 @@ func saveConfigFromCLI(c *cli.Context) (saveConfig, error) {
 	if c.NArg() < 1 {
 		return saveConfig{}, errors.New("save takes at least one reference (repo, repo:tag or repo@digest)")
 	}
-	cfg := saveConfig{Store: c.String("store"), Output: c.String("output"), Refs: c.Args().Slice(), Progress: c.String("progress")}
+	cfg := saveConfig{Store: c.String("store"), Output: c.String("output"), Refs: c.Args().Slice(), Progress: c.String("progress"), Parallelism: c.Int("parallelism")}
 	if cfg.Store == "" {
 		return saveConfig{}, errors.New("--store must not be empty")
+	}
+	if cfg.Parallelism < 1 {
+		return saveConfig{}, fmt.Errorf("--parallelism must be at least 1, got %d", cfg.Parallelism)
 	}
 	switch cfg.Progress {
 	case "auto", "tui", "plain":
@@ -216,7 +222,7 @@ func writeArchive(ctx context.Context, ro *readOnlyStore, cfg saveConfig, stdout
 		out = f
 	}
 	bw := bufio.NewWriterSize(out, 1<<20)
-	err = dockerarchive.Write(ctx, bw, storeSource{ro}, exports, dockerarchive.WriteOptions{Platform: platform, Progress: progress})
+	err = dockerarchive.Write(ctx, bw, storeSource{ro}, exports, dockerarchive.WriteOptions{Platform: platform, Parallelism: cfg.Parallelism, Progress: progress})
 	if err == nil {
 		err = bw.Flush()
 	}

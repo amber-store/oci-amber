@@ -23,9 +23,9 @@ func TestSaveTrackerSnapshot(t *testing.T) {
 	d := oci.DigestOfBytes([]byte("layer"))
 	tr.Progress(dockerarchive.WriteProgress{Count: 2, Total: 1000})
 	now = now.Add(time.Second)
-	tr.Progress(dockerarchive.WriteProgress{Count: 2, Total: 1000, Written: 250, Blob: d, Size: 600, BlobWritten: 250})
+	tr.Progress(dockerarchive.WriteProgress{Count: 2, Total: 1000, Produced: 250, Active: []dockerarchive.BlobProgress{{Digest: d, Size: 600, Written: 250}}})
 	s := tr.Snapshot()
-	if s.Elapsed != time.Second || s.Fraction != 0.25 || s.Blob != d || s.BlobWritten != 250 || s.Count != 2 {
+	if s.Elapsed != time.Second || s.Fraction != 0.25 || len(s.Active) != 1 || s.Active[0].Digest != d || s.Active[0].Written != 250 || s.Count != 2 {
 		t.Errorf("after one write: %+v", s)
 	}
 	if s.ETAKnown {
@@ -36,7 +36,7 @@ func TestSaveTrackerSnapshot(t *testing.T) {
 	if s = tr.Snapshot(); !s.ETAKnown || s.ETA != 6*time.Second || s.Elapsed != 2*time.Second {
 		t.Errorf("after the warmup: %+v", s)
 	}
-	tr.Progress(dockerarchive.WriteProgress{Count: 2, Total: 1000, Written: 1000, Done: 2})
+	tr.Progress(dockerarchive.WriteProgress{Count: 2, Total: 1000, Produced: 1000, Done: 2})
 	if s = tr.Snapshot(); s.Fraction != 1 || !s.ETAKnown || s.ETA != 0 || s.Done != 2 {
 		t.Errorf("complete: %+v", s)
 	}
@@ -45,7 +45,7 @@ func TestSaveTrackerSnapshot(t *testing.T) {
 func TestSaveTrackerETAWaitsForBytes(t *testing.T) {
 	now := time.Date(2026, 9, 7, 12, 0, 0, 0, time.UTC)
 	tr := NewSaveTracker(func() time.Time { return now })
-	tr.Progress(dockerarchive.WriteProgress{Count: 1, Total: 1000, Blob: oci.DigestOfBytes([]byte("x")), Size: 1000})
+	tr.Progress(dockerarchive.WriteProgress{Count: 1, Total: 1000, Active: []dockerarchive.BlobProgress{{Digest: oci.DigestOfBytes([]byte("x")), Size: 1000}}})
 	now = now.Add(10 * time.Second)
 	if s := tr.Snapshot(); s.ETAKnown || s.Fraction != 0 {
 		t.Errorf("no byte written yet: %+v", s)
@@ -55,8 +55,11 @@ func TestSaveTrackerETAWaitsForBytes(t *testing.T) {
 func saveSnapshot() SaveSnapshot {
 	return SaveSnapshot{
 		WriteProgress: dockerarchive.WriteProgress{
-			Count: 12, Total: 1288490188, Done: 3, Written: 536870912,
-			Blob: oci.DigestOfBytes([]byte("a")), Size: 239495578, BlobWritten: 91008319,
+			Count: 12, Total: 1288490188, Done: 3, Produced: 536870912,
+			Active: []dockerarchive.BlobProgress{
+				{Digest: oci.DigestOfBytes([]byte("a")), Size: 239495578, Written: 91008319},
+				{Digest: oci.DigestOfBytes([]byte("b")), Size: 104857600, Written: 0},
+			},
 		},
 		Elapsed:  42 * time.Second,
 		Fraction: 0.42,
@@ -67,11 +70,13 @@ func saveSnapshot() SaveSnapshot {
 
 func TestRenderSaveView(t *testing.T) {
 	out := RenderSaveView(saveSnapshot(), "Saving demo/app:v1 → app.tar", 100, plainBar)
+	// One line per blob being rebuilt, in the order they are reported.
 	for _, want := range []string{
 		"Saving demo/app:v1 → app.tar",
 		"elapsed 0:42",
 		"blobs  3/12 · 512.0 MiB of 1.2 GiB",
-		ShortDigest(oci.DigestOfBytes([]byte("a"))) + "  228.4 MiB  [###.......]   38%",
+		ShortDigest(oci.DigestOfBytes([]byte("a"))) + "  228.4 MiB  [###.......]   38%\n" +
+			"  ▸ " + ShortDigest(oci.DigestOfBytes([]byte("b"))) + "  100.0 MiB  [..........]    0%",
 		"[####......]   42%   ETA ~1m03s",
 		"q or ctrl-c to cancel",
 	} {
@@ -93,7 +98,7 @@ func TestRenderSaveViewBeforeAndBetweenBlobs(t *testing.T) {
 		t.Errorf("nothing resolved yet:\n%s", out)
 	}
 	s = saveSnapshot()
-	s.Blob, s.Size, s.BlobWritten, s.ETAKnown = "", 0, 0, false
+	s.Active, s.ETAKnown = nil, false
 	out = RenderSaveView(s, "Saving x", 80, plainBar)
 	if strings.Contains(out, "▸") || !strings.Contains(out, "ETA estimating") {
 		t.Errorf("between blobs:\n%s", out)
@@ -118,7 +123,7 @@ func TestRunSavePlainPrintsStatusAndReturnsError(t *testing.T) {
 	tr := NewSaveTracker(nil)
 	var out bytes.Buffer
 	err := RunSavePlain(&out, tr, 10*time.Millisecond, func() error {
-		tr.Progress(dockerarchive.WriteProgress{Count: 3, Total: 100, Written: 50, Done: 1})
+		tr.Progress(dockerarchive.WriteProgress{Count: 3, Total: 100, Produced: 50, Done: 1})
 		time.Sleep(50 * time.Millisecond)
 		return nil
 	})

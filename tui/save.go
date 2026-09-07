@@ -46,7 +46,7 @@ func (t *SaveTracker) Progress(p dockerarchive.WriteProgress) {
 }
 
 // SaveSnapshot is the tracker's state with the elapsed time, the fraction
-// of the bytes written and, once the rate is measurable, the ETA.
+// of the bytes produced and, once the rate is measurable, the ETA.
 type SaveSnapshot struct {
 	dockerarchive.WriteProgress
 	Elapsed  time.Duration
@@ -57,19 +57,19 @@ type SaveSnapshot struct {
 
 // Snapshot copies the state. The ETA is the bytes left over the rate
 // measured since the first report, once etaWarmup has passed and a byte
-// has been written.
+// has been produced.
 func (t *SaveTracker) Snapshot() SaveSnapshot {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	now := t.now()
 	s := SaveSnapshot{WriteProgress: t.p, Elapsed: now.Sub(t.started)}
 	if t.p.Total > 0 {
-		s.Fraction = min(1, float64(t.p.Written)/float64(t.p.Total))
+		s.Fraction = min(1, float64(t.p.Produced)/float64(t.p.Total))
 	}
-	if !t.planned.IsZero() && t.p.Written > 0 {
+	if !t.planned.IsZero() && t.p.Produced > 0 {
 		if elapsed := now.Sub(t.planned); elapsed >= etaWarmup {
-			rate := float64(t.p.Written) / elapsed.Seconds()
-			s.ETA = time.Duration(float64(t.p.Total-t.p.Written) / rate * float64(time.Second))
+			rate := float64(t.p.Produced) / elapsed.Seconds()
+			s.ETA = time.Duration(float64(t.p.Total-t.p.Produced) / rate * float64(time.Second))
 			s.ETAKnown = true
 		}
 	}
@@ -88,13 +88,13 @@ func RenderSaveView(s SaveSnapshot, title string, width int, bar func(float64) s
 	if s.Count == 0 {
 		b.WriteString("  resolving references\n")
 	} else {
-		fmt.Fprintf(&b, "  blobs  %s\n", styleDim.Render(fmt.Sprintf("%d/%d · %s of %s", s.Done, s.Count, FormatBytes(s.Written), FormatBytes(s.Total))))
-		if s.Blob != "" {
+		fmt.Fprintf(&b, "  blobs  %s\n", styleDim.Render(fmt.Sprintf("%d/%d · %s of %s", s.Done, s.Count, FormatBytes(s.Produced), FormatBytes(s.Total))))
+		for _, a := range s.Active {
 			part := 1.0
-			if s.Size > 0 {
-				part = min(1, float64(s.BlobWritten)/float64(s.Size))
+			if a.Size > 0 {
+				part = min(1, float64(a.Written)/float64(a.Size))
 			}
-			fmt.Fprintf(&b, "  ▸ %s  %-9s  %s  %3.0f%%\n", ShortDigest(s.Blob), FormatBytes(s.Size), bar(part), part*100)
+			fmt.Fprintf(&b, "  ▸ %s  %-9s  %s  %3.0f%%\n", ShortDigest(a.Digest), FormatBytes(a.Size), bar(part), part*100)
 		}
 		fmt.Fprintf(&b, "\n  %s  %3.0f%%   %s\n", bar(s.Fraction), s.Fraction*100, etaLabel(s))
 	}
@@ -108,7 +108,7 @@ func SaveStatusLine(s SaveSnapshot) string {
 	if s.Count == 0 {
 		return "resolving references · " + elapsed
 	}
-	return fmt.Sprintf("blobs %d/%d · %.0f%% · %s of %s · %s · %s", s.Done, s.Count, s.Fraction*100, FormatBytes(s.Written), FormatBytes(s.Total), elapsed, etaLabel(s))
+	return fmt.Sprintf("blobs %d/%d · %.0f%% · %s of %s · %s · %s", s.Done, s.Count, s.Fraction*100, FormatBytes(s.Produced), FormatBytes(s.Total), elapsed, etaLabel(s))
 }
 
 func etaLabel(s SaveSnapshot) string {

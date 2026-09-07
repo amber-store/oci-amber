@@ -8,23 +8,26 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
-	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/draganm/oci-amber/oci"
 )
 
 // memSource is a Source over maps: the manifests and blobs of the images a
-// test saves.
+// test saves. Write rebuilds blobs on several goroutines, so Blob is safe
+// for concurrent use.
 type memSource struct {
 	manifests map[oci.Digest][]byte
 	blobs     map[oci.Digest][]byte
 	blobErr   error // returned by every Blob call when set
+
+	mu        sync.Mutex
 	blobCalls int
 }
 
@@ -41,7 +44,9 @@ func (m *memSource) Manifest(ctx context.Context, repo string, d oci.Digest) ([]
 }
 
 func (m *memSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	m.mu.Lock()
 	m.blobCalls++
+	m.mu.Unlock()
 	if m.blobErr != nil {
 		return m.blobErr
 	}
@@ -51,6 +56,13 @@ func (m *memSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
 	}
 	_, err := w.Write(b)
 	return err
+}
+
+// calls returns how many times Blob was called.
+func (m *memSource) calls() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.blobCalls
 }
 
 func (m *memSource) addBlob(mediaType string, data []byte) oci.Descriptor {
@@ -293,8 +305,8 @@ func TestWriteSameImageTwoTags(t *testing.T) {
 	if len(a.Legacy) != 1 || !slices.Equal(a.Legacy[0].RepoTags, []string{"demo/app:v1", "demo/app:latest"}) {
 		t.Errorf("manifest.json = %+v", a.Legacy)
 	}
-	if src.blobCalls != 2 {
-		t.Errorf("blobs streamed %d times, want once each (config, layer)", src.blobCalls)
+	if n := src.calls(); n != 2 {
+		t.Errorf("blobs streamed %d times, want once each (config, layer)", n)
 	}
 	p, err := a.Plan(PlanOptions{})
 	if err != nil {
@@ -406,13 +418,18 @@ func TestWriteBlobSizeMismatch(t *testing.T) {
 	src := newMemSource()
 	img := src.addImage(`{}`, []string{"layer bytes"}, nil, nil)
 	export := []Export{{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}}
-	err := Write(context.Background(), io.Discard, sizedSource{src, -1}, export, WriteOptions{})
-	if err == nil || !strings.Contains(err.Error(), "its descriptor says") {
-		t.Errorf("short blob: %v", err)
-	}
-	err = Write(context.Background(), io.Discard, sizedSource{src, 1}, export, WriteOptions{})
-	if err == nil || !errors.Is(err, tar.ErrWriteTooLong) {
-		t.Errorf("long blob: %v", err)
+	layer := oci.DigestOfBytes([]byte("layer bytes"))
+	for _, delta := range []int{-1, 1} {
+		var buf bytes.Buffer
+		err := Write(context.Background(), &buf, sizedSource{src, delta}, export, WriteOptions{})
+		if err == nil || !strings.Contains(err.Error(), "its descriptor says") {
+			t.Errorf("delta %d: %v", delta, err)
+		}
+		// The size is checked on the staged file, before the entry's
+		// header, so the archive stops short of the bad blob.
+		if bytes.Contains(buf.Bytes(), []byte(blobPath(layer))) {
+			t.Errorf("delta %d: the archive holds a header for the mismatched blob", delta)
+		}
 	}
 }
 
@@ -422,27 +439,289 @@ func TestWriteReportsProgress(t *testing.T) {
 	var got []WriteProgress
 	write(t, src, WriteOptions{Progress: func(p WriteProgress) { got = append(got, p) }}, Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"})
 
-	// Every blobs/sha256 entry, manifest included, in the order they are
-	// written: each is announced before its first byte, reported after
-	// every write, and counted done afterwards.
 	sizes := map[oci.Digest]int64{img.Digest: img.Size}
 	for d, b := range src.blobs {
 		sizes[d] = int64(len(b))
 	}
-	digests := slices.Sorted(maps.Keys(sizes))
 	var total int64
 	for _, s := range sizes {
 		total += s
 	}
-	want := []WriteProgress{{Count: len(digests), Total: total}}
-	var written int64
-	for i, d := range digests {
-		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i, Blob: d, Size: sizes[d]})
-		written += sizes[d]
-		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i, Blob: d, Size: sizes[d], BlobWritten: sizes[d]})
-		want = append(want, WriteProgress{Count: len(digests), Total: total, Written: written, Done: i + 1})
+	count := len(sizes)
+	// The totals come first, before any byte, and the last report says
+	// everything was produced and written.
+	if len(got) < 2 || got[0].Count != count || got[0].Total != total || got[0].Produced != 0 || got[0].Done != 0 || len(got[0].Active) != 0 {
+		t.Fatalf("first report %+v, want the totals alone", got)
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("progress calls:\n got %+v\nwant %+v", got, want)
+	if last := got[len(got)-1]; last.Count != count || last.Total != total || last.Produced != total || last.Done != count || len(last.Active) != 0 {
+		t.Errorf("last report %+v, want everything produced and done", last)
+	}
+	// Produced and Done never go backwards, and the blobs being rebuilt
+	// are reported in write order with their sizes, each from its first
+	// byte to its last.
+	var produced int64
+	done := 0
+	seen := map[oci.Digest][]int64{} // per-blob Written values, in order
+	for _, p := range got[1:] {
+		if p.Produced < produced || p.Done < done {
+			t.Errorf("progress went backwards: %+v after produced=%d done=%d", p, produced, done)
+		}
+		produced, done = p.Produced, p.Done
+		if !slices.IsSortedFunc(p.Active, func(a, b BlobProgress) int { return strings.Compare(string(a.Digest), string(b.Digest)) }) {
+			t.Errorf("active blobs out of write order: %+v", p.Active)
+		}
+		for _, a := range p.Active {
+			if a.Size != sizes[a.Digest] {
+				t.Errorf("active blob %s has size %d, want %d", a.Digest, a.Size, sizes[a.Digest])
+			}
+			seen[a.Digest] = append(seen[a.Digest], a.Written)
+		}
+	}
+	for d, b := range src.blobs {
+		w := seen[d]
+		if len(w) < 2 || w[0] != 0 || w[len(w)-1] != int64(len(b)) || !slices.IsSorted(w) {
+			t.Errorf("blob %s was reported at %v, want 0 through %d", d, w, len(b))
+		}
+	}
+	if seen[img.Digest] != nil {
+		t.Errorf("the manifest, written from memory, must not be an active blob: %v", seen[img.Digest])
+	}
+}
+
+// TestWriteReportsProgressOnOneGoroutineAtATime pins the callback contract:
+// reports come from several goroutines but never at once.
+func TestWriteReportsProgressOnOneGoroutineAtATime(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"a", "bb", "ccc", "dddd", "eeeee"}, nil, nil)
+	var inside, overlaps int32
+	var mu sync.Mutex
+	progress := func(WriteProgress) {
+		mu.Lock()
+		inside++
+		if inside > 1 {
+			overlaps++
+		}
+		mu.Unlock()
+		time.Sleep(50 * time.Microsecond)
+		mu.Lock()
+		inside--
+		mu.Unlock()
+	}
+	write(t, src, WriteOptions{Parallelism: 4, Progress: progress}, Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"})
+	if overlaps > 0 {
+		t.Errorf("progress callback ran concurrently %d times", overlaps)
+	}
+}
+
+func TestWriteInParallelIsByteIdentical(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"f", "ee", "ddd", "cccc", "bbbbb", "aaaaaa"}, nil, nil)
+	export := Export{Repo: "demo/app", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}
+	sequential, _ := write(t, src, WriteOptions{Parallelism: 1}, export)
+	parallel, _ := write(t, src, WriteOptions{Parallelism: 3}, export)
+	def, _ := write(t, src, WriteOptions{}, export)
+	if !bytes.Equal(sequential, parallel) || !bytes.Equal(sequential, def) {
+		t.Error("archives differ with the parallelism")
+	}
+}
+
+// meetingSource is a Source whose Blob calls wait for one another: each
+// blocks until want calls are in flight, so a Write that rebuilds fewer
+// blobs at once than that hangs (and the test fails on its timeout). It
+// records the most calls that were ever in flight.
+type meetingSource struct {
+	Source
+	want int
+
+	mu       sync.Mutex
+	inflight int
+	most     int
+	all      chan struct{} // closed once want calls are in flight
+}
+
+func (m *meetingSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	m.mu.Lock()
+	m.inflight++
+	m.most = max(m.most, m.inflight)
+	if m.inflight == m.want {
+		close(m.all)
+	}
+	m.mu.Unlock()
+	select {
+	case <-m.all:
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(5 * time.Second):
+		return errors.New("no other blob arrived")
+	}
+	err := m.Source.Blob(ctx, d, w)
+	m.mu.Lock()
+	m.inflight--
+	m.mu.Unlock()
+	return err
+}
+
+func TestWriteRebuildsBlobsAtOnce(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"one", "two", "three"}, nil, nil)
+	export := Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}
+	// Four blobs (config and three layers); every one waits for three
+	// others, so only Parallelism 4 gets through.
+	m := &meetingSource{Source: src, want: 4, all: make(chan struct{})}
+	write(t, m, WriteOptions{Parallelism: 4}, export)
+	if m.most != 4 {
+		t.Errorf("%d blobs were rebuilt at once, want 4", m.most)
+	}
+}
+
+// slowSource is a Source whose Blob calls take a while, so that a Write
+// with any lookahead overlaps them; it records the most in flight.
+type slowSource struct {
+	Source
+	mu       sync.Mutex
+	inflight int
+	most     int
+}
+
+func (s *slowSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	s.mu.Lock()
+	s.inflight++
+	s.most = max(s.most, s.inflight)
+	s.mu.Unlock()
+	time.Sleep(20 * time.Millisecond)
+	err := s.Source.Blob(ctx, d, w)
+	s.mu.Lock()
+	s.inflight--
+	s.mu.Unlock()
+	return err
+}
+
+func TestWriteRebuildsNoMoreThanParallelism(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"1", "2", "3", "4", "5", "6"}, nil, nil)
+	export := Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}
+	s := &slowSource{Source: src}
+	write(t, s, WriteOptions{Parallelism: 2}, export)
+	if s.most > 2 {
+		t.Errorf("%d blobs were rebuilt at once, want at most 2", s.most)
+	}
+	s = &slowSource{Source: src}
+	write(t, s, WriteOptions{}, export)
+	if s.most > 1 {
+		t.Errorf("%d blobs were rebuilt at once by default, want 1", s.most)
+	}
+}
+
+// stagedFiles lists what a Write left under its work directory.
+func stagedFiles(t *testing.T, dir string) []string {
+	t.Helper()
+	var out []string
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path != dir {
+			out = append(out, strings.TrimPrefix(path, dir+"/"))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func TestWriteStagesBlobsUnderWorkDirAndCleansUp(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"layer one", "layer two"}, nil, nil)
+	export := Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}
+	work := t.TempDir()
+
+	// The staged files live in a directory of their own under WorkDir
+	// while the blobs are rebuilt...
+	var seen []string
+	var once sync.Once
+	spy := spySource{src, func() { once.Do(func() { seen = stagedFiles(t, work) }) }}
+	write(t, spy, WriteOptions{WorkDir: work, Parallelism: 2}, export)
+	if len(seen) == 0 || !strings.HasPrefix(seen[0], "oci-amber-save-") {
+		t.Errorf("staged files during the write: %v, want some under oci-amber-save-*", seen)
+	}
+	// ...and nothing is left after a success, a blob failure or a
+	// cancellation.
+	if left := stagedFiles(t, work); len(left) != 0 {
+		t.Errorf("left after a successful save: %v", left)
+	}
+	src.blobErr = errors.New("boom")
+	if err := Write(context.Background(), io.Discard, src, []Export{export}, WriteOptions{WorkDir: work, Parallelism: 2}); !errors.Is(err, src.blobErr) {
+		t.Fatalf("Write = %v, want the blob error", err)
+	}
+	if left := stagedFiles(t, work); len(left) != 0 {
+		t.Errorf("left after a failed save: %v", left)
+	}
+	src.blobErr = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	blocking := blockingSource{src, cancel}
+	if err := Write(ctx, io.Discard, blocking, []Export{export}, WriteOptions{WorkDir: work, Parallelism: 2}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Write = %v, want the cancellation", err)
+	}
+	if left := stagedFiles(t, work); len(left) != 0 {
+		t.Errorf("left after a cancelled save: %v", left)
+	}
+}
+
+// spySource calls fn after every blob is written.
+type spySource struct {
+	Source
+	fn func()
+}
+
+func (s spySource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	err := s.Source.Blob(ctx, d, w)
+	s.fn()
+	return err
+}
+
+// blockingSource cancels the save from inside its first Blob call and
+// then waits for the context, the way a recompression that is cancelled
+// does.
+type blockingSource struct {
+	Source
+	cancel func()
+}
+
+func (b blockingSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	b.cancel()
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+// failingSource fails the blob at fail and serves the rest.
+type failingSource struct {
+	Source
+	fail oci.Digest
+	err  error
+}
+
+func (f failingSource) Blob(ctx context.Context, d oci.Digest, w io.Writer) error {
+	if d == f.fail {
+		return f.err
+	}
+	return f.Source.Blob(ctx, d, w)
+}
+
+func TestWriteReportsTheBlobErrorNotTheCancellation(t *testing.T) {
+	src := newMemSource()
+	img := src.addImage(`{}`, []string{"aaaa", "bbbb", "cccc", "dddd"}, nil, nil)
+	export := Export{Repo: "x", Digest: img.Digest, MediaType: img.MediaType, Tag: "v1"}
+	boom := errors.New("recompress failed")
+	// Whichever blob fails, and however many are rebuilt at once, the
+	// failure that stopped the save is the one reported, not the
+	// cancellation it caused in the other workers.
+	for d := range src.blobs {
+		f := failingSource{&slowSource{Source: src}, d, boom}
+		err := Write(context.Background(), io.Discard, f, []Export{export}, WriteOptions{Parallelism: 4})
+		if !errors.Is(err, boom) || errors.Is(err, context.Canceled) {
+			t.Errorf("failing %s: Write = %v, want the blob error", d, err)
+		}
 	}
 }
