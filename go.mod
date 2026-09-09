@@ -3,7 +3,7 @@ module github.com/amber-store/oci-amber
 go 1.26.6
 
 require (
-	github.com/amber-store/core v0.0.4
+	github.com/amber-store/core v0.0.7
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
